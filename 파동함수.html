@@ -1,0 +1,746 @@
+````html
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>복소 파동함수 3D 시각화</title>
+
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f5f5f5;
+}
+
+#top {
+    padding: 14px 20px;
+    background: white;
+    border-bottom: 1px solid #ddd;
+}
+
+h2 {
+    margin: 0 0 8px;
+}
+
+.formula {
+    font-family: "Times New Roman", serif;
+    font-size: 19px;
+    margin-bottom: 12px;
+}
+
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: center;
+}
+
+label {
+    white-space: nowrap;
+}
+
+input[type="range"] {
+    width: 200px;
+}
+
+button {
+    padding: 7px 13px;
+    border: 1px solid #bbb;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #eee;
+}
+
+.value {
+    display: inline-block;
+    width: 55px;
+    text-align: right;
+}
+
+#plot {
+    width: 100%;
+    height: calc(100vh - 155px);
+    min-height: 550px;
+}
+</style>
+
+</head>
+
+<body>
+
+<div id="top">
+
+<h2>복소 파동함수의 시간 변화</h2>
+
+<div class="formula">
+    ψ(x,t) =
+    √(2/L) sin(nπx/L) e<sup>−iE<sub>n</sub>t/ℏ</sup>
+</div>
+
+<div class="controls">
+
+<label>
+    양자수 n:
+    <input
+        id="n"
+        type="range"
+        min="1"
+        max="5"
+        step="1"
+        value="1"
+    >
+    <span id="nv" class="value">1</span>
+</label>
+
+
+<label>
+    시간 t:
+    <input
+        id="time"
+        type="range"
+        min="0"
+        max="6.283185"
+        step="0.01"
+        value="0"
+    >
+    <span id="tv" class="value">0.00</span>
+</label>
+
+
+<label>
+    재생 속도:
+    <input
+        id="speed"
+        type="range"
+        min="0.1"
+        max="2"
+        step="0.1"
+        value="0.3"
+    >
+    <span id="sv" class="value">0.3×</span>
+</label>
+
+
+<button id="play">
+    ▶ 재생
+</button>
+
+
+<button id="reset">
+    ↺ 초기화
+</button>
+
+
+<label>
+    <input
+        id="prob"
+        type="checkbox"
+        checked
+    >
+    |ψ|² 표시
+</label>
+
+</div>
+</div>
+
+
+<div id="plot"></div>
+
+
+<script>
+
+/* =====================================================
+   기본 설정
+   ===================================================== */
+
+const N = 300;
+
+const L = 1;
+
+const hbar = 1;
+
+const m = 1;
+
+
+/* =====================================================
+   파동함수 계산
+   ===================================================== */
+
+function makeData() {
+
+    const n =
+        Number(
+            document
+                .getElementById("n")
+                .value
+        );
+
+
+    const t =
+        Number(
+            document
+                .getElementById("time")
+                .value
+        );
+
+
+    /*
+        무한 퍼텐셜 우물
+
+        E_n = n²π²ħ² / 2mL²
+
+        여기서는
+
+        L = 1
+        ħ = 1
+        m = 1
+    */
+
+    const E =
+        n * n * Math.PI * Math.PI / 2;
+
+
+    const phase =
+        E * t / hbar;
+
+
+    const x = [];
+
+    const re = [];
+
+    const im = [];
+
+    const probability = [];
+
+
+    for (let i = 0; i < N; i++) {
+
+        const xx =
+            L * i / (N - 1);
+
+
+        /*
+            공간 부분
+
+            φ(x)
+            =
+            √(2/L) sin(nπx/L)
+        */
+
+        const amplitude =
+            Math.sqrt(2 / L)
+            *
+            Math.sin(
+                n * Math.PI * xx / L
+            );
+
+
+        /*
+            시간 부분
+
+            e^(-iEt/ħ)
+
+            =
+            cos(Et/ħ)
+            -
+            i sin(Et/ħ)
+        */
+
+
+        const real =
+            amplitude *
+            Math.cos(phase);
+
+
+        const imaginary =
+            -amplitude *
+            Math.sin(phase);
+
+
+        x.push(xx);
+
+        re.push(real);
+
+        im.push(imaginary);
+
+
+        /*
+            |ψ|²
+
+            시간 부분의 크기는 1이므로
+            공간 부분의 제곱과 같다.
+        */
+
+        probability.push(
+            amplitude * amplitude
+        );
+    }
+
+
+    const data = [
+
+        /* ---------------------------------------------
+           복소 파동함수
+           --------------------------------------------- */
+
+        {
+            type: "scatter3d",
+
+            mode: "lines",
+
+            x: x,
+
+            y: re,
+
+            z: im,
+
+            line: {
+                width: 7
+            },
+
+            name: "ψ(x,t)",
+
+            hovertemplate:
+                "x = %{x:.3f}" +
+                "<br>Re(ψ) = %{y:.3f}" +
+                "<br>Im(ψ) = %{z:.3f}" +
+                "<extra></extra>"
+        }
+
+    ];
+
+
+    /* ---------------------------------------------
+       확률밀도 |ψ|²
+       --------------------------------------------- */
+
+    if (
+        document
+            .getElementById("prob")
+            .checked
+    ) {
+
+        data.push({
+
+            type: "scatter3d",
+
+            mode: "lines",
+
+            x: x,
+
+            y: probability,
+
+            z: new Array(N).fill(0),
+
+            line: {
+                width: 4,
+                dash: "dash"
+            },
+
+            name: "|ψ|²",
+
+            hovertemplate:
+                "x = %{x:.3f}" +
+                "<br>|ψ|² = %{y:.3f}" +
+                "<extra></extra>"
+        });
+    }
+
+
+    return {
+        data,
+        n,
+        t,
+        E,
+        phase
+    };
+}
+
+
+/* =====================================================
+   그래프 그리기
+   ===================================================== */
+
+function draw() {
+
+    const {
+        data,
+        n,
+        t,
+        E,
+        phase
+    } = makeData();
+
+
+    /*
+        위쪽 숫자만 현재 값으로 변경
+
+        축 자체의 범위와 눈금은 고정
+    */
+
+    document
+        .getElementById("nv")
+        .textContent = n;
+
+
+    document
+        .getElementById("tv")
+        .textContent =
+        t.toFixed(2);
+
+
+    const layout = {
+
+        margin: {
+            l: 0,
+            r: 0,
+            b: 0,
+            t: 50
+        },
+
+
+        title: {
+            text:
+                `n = ${n}    |    t = ${t.toFixed(2)}`,
+
+            x: 0.02,
+
+            xanchor: "left"
+        },
+
+
+        /*
+            매우 중요!
+
+            이 값을 고정하면
+
+            시간 변화
+            ↓
+            그래프 데이터 변경
+            ↓
+            카메라 위치는 그대로 유지
+
+            따라서 재생 중에도
+            마우스로 화면을 돌릴 수 있다.
+        */
+
+        uirevision: "camera-fixed",
+
+
+        scene: {
+
+            /* =========================
+               x축
+               ========================= */
+
+            xaxis: {
+
+                title: "위치 x",
+
+                range: [0, 1],
+
+                dtick: 0.2,
+
+                fixedrange: false
+            },
+
+
+            /* =========================
+               y축
+               ========================= */
+
+            yaxis: {
+
+                title: "Re(ψ) / |ψ|²",
+
+                range: [-1.5, 2.1],
+
+                dtick: 0.5,
+
+                fixedrange: false
+            },
+
+
+            /* =========================
+               z축
+               ========================= */
+
+            zaxis: {
+
+                title: "Im(ψ)",
+
+                range: [-1.5, 1.5],
+
+                dtick: 0.5,
+
+                fixedrange: false
+            },
+
+
+            /* =========================
+               축 비율
+               ========================= */
+
+            aspectmode: "manual",
+
+            aspectratio: {
+
+                x: 1.5,
+
+                y: 1,
+
+                z: 1
+            },
+
+
+            /* =========================
+               처음 화면
+               ========================= */
+
+            camera: {
+
+                eye: {
+
+                    x: 1.45,
+
+                    y: 1.35,
+
+                    z: 1.15
+                }
+            }
+        },
+
+
+        legend: {
+
+            x: 0.02,
+
+            y: 0.98
+        }
+    };
+
+
+    Plotly.react(
+
+        "plot",
+
+        data,
+
+        layout,
+
+        {
+
+            responsive: true,
+
+            displaylogo: false,
+
+            scrollZoom: true
+        }
+    );
+}
+
+
+/* =====================================================
+   양자수 변경
+   ===================================================== */
+
+document
+    .getElementById("n")
+    .addEventListener(
+        "input",
+        draw
+    );
+
+
+/* =====================================================
+   시간 슬라이더
+   ===================================================== */
+
+document
+    .getElementById("time")
+    .addEventListener(
+        "input",
+        draw
+    );
+
+
+/* =====================================================
+   확률밀도 표시
+   ===================================================== */
+
+document
+    .getElementById("prob")
+    .addEventListener(
+        "change",
+        draw
+    );
+
+
+/* =====================================================
+   재생 속도 표시
+   ===================================================== */
+
+document
+    .getElementById("speed")
+    .addEventListener(
+        "input",
+        () => {
+
+            const speed =
+                Number(
+                    document
+                        .getElementById("speed")
+                        .value
+                );
+
+
+            document
+                .getElementById("sv")
+                .textContent =
+                speed.toFixed(1) + "×";
+        }
+    );
+
+
+/* =====================================================
+   재생
+   ===================================================== */
+
+let playing = false;
+
+let timer = null;
+
+
+document
+    .getElementById("play")
+    .addEventListener(
+        "click",
+        () => {
+
+            playing = !playing;
+
+
+            document
+                .getElementById("play")
+                .textContent =
+                playing
+                ? "⏸ 정지"
+                : "▶ 재생";
+
+
+            if (playing) {
+
+                timer = setInterval(
+                    () => {
+
+                        const slider =
+                            document
+                                .getElementById("time");
+
+
+                        /*
+                            기본 증가량
+
+                            0.025
+
+                            여기에 사용자가 정한
+                            재생 속도를 곱한다.
+                        */
+
+                        const speed =
+                            Number(
+                                document
+                                    .getElementById("speed")
+                                    .value
+                            );
+
+
+                        let t =
+                            Number(slider.value)
+                            +
+                            0.025 * speed;
+
+
+                        /*
+                            끝까지 가면 다시 처음
+                        */
+
+                        if (
+                            t >
+                            Number(slider.max)
+                        ) {
+
+                            t = 0;
+
+                        }
+
+
+                        slider.value = t;
+
+
+                        /*
+                            그래프만 업데이트
+
+                            카메라 위치는 유지됨
+                        */
+
+                        draw();
+
+                    },
+
+                    30
+                );
+
+            }
+
+            else {
+
+                clearInterval(timer);
+
+            }
+
+        }
+    );
+
+
+/* =====================================================
+   초기화
+   ===================================================== */
+
+document
+    .getElementById("reset")
+    .addEventListener(
+        "click",
+        () => {
+
+            document
+                .getElementById("time")
+                .value = 0;
+
+
+            draw();
+
+        }
+    );
+
+
+/* =====================================================
+   최초 실행
+   ===================================================== */
+
+draw();
+
+</script>
+
+</body>
+</html>
+```
+
