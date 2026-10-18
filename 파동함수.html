@@ -1,746 +1,995 @@
-````html
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>복소 파동함수 3D 시각화</title>
-
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
-
 <style>
-body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: #f5f5f5;
-}
-
-#top {
-    padding: 14px 20px;
-    background: white;
-    border-bottom: 1px solid #ddd;
-}
-
-h2 {
-    margin: 0 0 8px;
-}
-
-.formula {
-    font-family: "Times New Roman", serif;
-    font-size: 19px;
-    margin-bottom: 12px;
-}
-
-.controls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 14px;
-    align-items: center;
-}
-
-label {
-    white-space: nowrap;
-}
-
-input[type="range"] {
-    width: 200px;
-}
-
-button {
-    padding: 7px 13px;
-    border: 1px solid #bbb;
-    border-radius: 6px;
-    background: white;
-    cursor: pointer;
-}
-
-button:hover {
-    background: #eee;
-}
-
-.value {
-    display: inline-block;
-    width: 55px;
-    text-align: right;
-}
-
-#plot {
-    width: 100%;
-    height: calc(100vh - 155px);
-    min-height: 550px;
-}
+  body { margin:0; font-family:Arial,sans-serif; background:#f5f5f5; }
+  #top { padding:14px 20px; background:white; border-bottom:1px solid #ddd; }
+  h2 { margin:0 0 8px; }
+  .formula { font-family:"Times New Roman",serif; font-size:18px; margin-bottom:12px; }
+  .controls { display:flex; flex-wrap:wrap; gap:12px; align-items:center; }
+  label { white-space:nowrap; }
+  input[type="range"] { width:180px; vertical-align:middle; }
+  select,button,input[type="number"] {
+    padding:7px 10px; border:1px solid #bbb; border-radius:6px; background:white;
+  }
+  button { cursor:pointer; }
+  #workspace { display:flex; width:100%; align-items:stretch; }
+  #plot { flex:1; min-width:0; height:calc(100vh - 220px); min-height:520px; }
+  #operatorPanel,#pointPanel {
+    width:300px;
+    flex-shrink:0;
+    box-sizing:border-box;
+    padding:14px;
+    background:white;
+    height:calc(100vh - 220px);
+    min-height:520px;
+    overflow-y:auto;
+  }
+  #operatorPanel { border-left:1px solid #ddd; width:320px; }
+  #pointPanel { border-right:1px solid #ddd; }
+  #operatorPanel h3,#pointPanel h3 { margin:0 0 8px; font-size:18px; }
+  #operatorNote,#pointNote {
+    font-size:12px; color:#555; line-height:1.5; margin-bottom:12px;
+  }
+  .operatorItem,.pointItem { padding:10px 0; border-bottom:1px solid #e5e5e5; }
+  .operatorName,.pointName { font-weight:bold; font-size:14px; margin-bottom:5px; }
+  .operatorFormula,.pointFormula {
+    font-family:"Times New Roman",serif;
+    font-size:15px; line-height:1.6; overflow-wrap:anywhere;
+  }
+  .operatorValue,.pointValue {
+    margin-top:5px; font-size:13px; color:#333; overflow-wrap:anywhere;
+  }
+  .pointMagnitude {
+    margin-top:4px;
+    font-size:13px;
+    color:#555;
+    overflow-wrap:anywhere;
+  }
+  .value { display:inline-block; min-width:65px; text-align:right; font-variant-numeric:tabular-nums; }
+  #periodInfo { margin-top:10px; color:#444; font-size:14px; }
+  #periodButtons {
+    display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:12px;
+  }
+  #periodButtons span { font-size:14px; color:#444; margin-right:2px; }
+  #periodButtons button { min-width:58px; }
+  #xInput { width:100%; box-sizing:border-box; margin:5px 0 10px; }
+  .inputLabel { display:block; font-size:13px; font-weight:bold; }
+  @media (max-width:1100px) {
+    #workspace { flex-wrap:wrap; }
+    #pointPanel,#operatorPanel { width:50%; height:auto; min-height:0; max-height:420px; }
+    #plot { flex-basis:100%; order:0; height:65vh; min-height:450px; }
+    #pointPanel { order:1; border-right:1px solid #ddd; border-top:1px solid #ddd; }
+    #operatorPanel { order:2; border-left:1px solid #ddd; border-top:1px solid #ddd; }
+  }
+  @media (max-width:600px) {
+    #pointPanel,#operatorPanel { width:100%; max-height:none; }
+    #pointPanel { border-right:none; }
+    #operatorPanel { border-left:none; }
+  }
 </style>
-
 </head>
-
 <body>
 
 <div id="top">
+  <h2>복소 파동함수의 시간 변화</h2>
+  <div class="formula" id="mainFormula">
+    ψ(x,t) = √(2/L) sin(nπx/L)e<sup>−iEₙt/ℏ</sup>
+  </div>
 
-<h2>복소 파동함수의 시간 변화</h2>
+  <div class="controls">
+    <label>
+      퍼텐셜:
+      <select id="system">
+        <option value="well">무한 퍼텐셜 우물</option>
+        <option value="oscillator">조화 진동자</option>
+      </select>
+    </label>
 
-<div class="formula">
-    ψ(x,t) =
-    √(2/L) sin(nπx/L) e<sup>−iE<sub>n</sub>t/ℏ</sup>
+    <label>
+      파동함수 종류:
+      <select id="scenario">
+        <option value="eigen">에너지 고유상태</option>
+        <option value="super12">n = 1, 2 중첩</option>
+        <option value="super13">n = 1, 3 중첩</option>
+        <option value="super123">n = 1, 2, 3 중첩</option>
+      </select>
+    </label>
+
+    <label>
+      양자수 n:
+      <input id="n" type="range" min="1" max="5" step="1" value="1">
+      <span id="nv" class="value">1</span>
+    </label>
+
+    <label>
+      시간 t:
+      <input id="time" type="range" min="0" max="1" step="0.001" value="0">
+      <span id="tv" class="value">0.000</span>
+    </label>
+
+    <label>
+      재생 속도:
+      <input id="speed" type="range" min="0.1" max="3" step="0.1" value="1">
+      <span id="sv" class="value">1.0×</span>
+    </label>
+
+    <button id="play">▶ 재생</button>
+    <button id="reset">↺ 초기화</button>
+
+    <label>
+      그래프:
+      <select id="graphMode">
+        <option value="both">둘 다</option>
+        <option value="wave">파동함수만</option>
+        <option value="probability">확률 밀도만</option>
+      </select>
+    </label>
+  </div>
+
+  <div id="periodInfo"></div>
+
+  <div id="periodButtons">
+    <span>주기 위치:</span>
+    <button data-fraction="0">0</button>
+    <button data-fraction="0.25">T/4</button>
+    <button data-fraction="0.5">T/2</button>
+    <button data-fraction="0.75">3T/4</button>
+    <button data-fraction="1">T</button>
+  </div>
 </div>
 
-<div class="controls">
+<div id="workspace">
+  <aside id="pointPanel">
+    <h3>위치별 파동함수 값</h3>
+    <div id="pointNote">
+      입력한 위치 x와 현재 시간 t에서의 파동함수 및 연산자 적용값입니다.
+    </div>
 
-<label>
-    양자수 n:
-    <input
-        id="n"
-        type="range"
-        min="1"
-        max="5"
-        step="1"
-        value="1"
-    >
-    <span id="nv" class="value">1</span>
-</label>
+    <label class="inputLabel" for="xInput">위치 x (0 ≤ x ≤ 1)</label>
+    <input id="xInput" type="number" min="0" max="1" step="0.01" value="0.5">
 
+    <div id="pointTime" class="operatorValue"></div>
+    <div id="pointList"></div>
+  </aside>
 
-<label>
-    시간 t:
-    <input
-        id="time"
-        type="range"
-        min="0"
-        max="6.283185"
-        step="0.01"
-        value="0"
-    >
-    <span id="tv" class="value">0.00</span>
-</label>
+  <div id="plot"></div>
 
-
-<label>
-    재생 속도:
-    <input
-        id="speed"
-        type="range"
-        min="0.1"
-        max="2"
-        step="0.1"
-        value="0.3"
-    >
-    <span id="sv" class="value">0.3×</span>
-</label>
-
-
-<button id="play">
-    ▶ 재생
-</button>
-
-
-<button id="reset">
-    ↺ 초기화
-</button>
-
-
-<label>
-    <input
-        id="prob"
-        type="checkbox"
-        checked
-    >
-    |ψ|² 표시
-</label>
-
+  <aside id="operatorPanel">
+    <h3>연산자 및 기댓값</h3>
+    <div id="operatorNote">
+      현재 선택한 상태에서의 연산자 기댓값입니다.
+      단위는 L = ℏ = m = 1로 설정한 무차원 단위입니다.
+    </div>
+    <div id="operatorList"></div>
+  </aside>
 </div>
-</div>
-
-
-<div id="plot"></div>
-
 
 <script>
-
-/* =====================================================
-   기본 설정
-   ===================================================== */
-
 const N = 300;
-
 const L = 1;
-
 const hbar = 1;
-
 const m = 1;
+const E0 = Math.PI ** 2 * hbar ** 2 / (2 * m * L ** 2);
 
+// 조화 진동자 설정
+const oscillatorLength = 0.4;
+const omega = hbar/(m*oscillatorLength**2);
+const oscillatorCenter = 1;
 
-/* =====================================================
-   파동함수 계산
-   ===================================================== */
+const graph = document.getElementById("plot");
+const system = document.getElementById("system");
+const scenario = document.getElementById("scenario");
+const nSlider = document.getElementById("n");
+const timeSlider = document.getElementById("time");
+const speedSlider = document.getElementById("speed");
+const graphMode = document.getElementById("graphMode");
+const playButton = document.getElementById("play");
+const xInput = document.getElementById("xInput");
 
-function makeData() {
+let xValues = [];
+let dx = L/(N-1);
 
-    const n =
-        Number(
-            document
-                .getElementById("n")
-                .value
-        );
+function isOscillator() {
+  return system.value === "oscillator";
+}
 
+function getPositionRange() {
+  return isOscillator() ? [0,2*L] : [0,L];
+}
 
-    const t =
-        Number(
-            document
-                .getElementById("time")
-                .value
-        );
+function updatePositionGrid() {
+  const range = getPositionRange();
+  const xmin = range[0];
+  const xmax = range[1];
 
+  xValues = Array.from(
+    {length:N},
+    (_,i)=>xmin+(xmax-xmin)*i/(N-1)
+  );
 
-    /*
-        무한 퍼텐셜 우물
+  dx = (xmax-xmin)/(N-1);
+  xInput.min = xmin;
+  xInput.max = xmax;
 
-        E_n = n²π²ħ² / 2mL²
+  document.querySelector('label[for="xInput"]').textContent =
+    "위치 x (" + xmin + " ≤ x ≤ " + xmax + ")";
 
-        여기서는
+  const currentX = Number(xInput.value);
+  if (!Number.isFinite(currentX) || currentX < xmin || currentX > xmax) {
+    xInput.value = (xmin+xmax)/2;
+  }
+}
 
-        L = 1
-        ħ = 1
-        m = 1
-    */
+let t = 0;
+let playing = false;
+let lastFrame = null;
+let animationId = null;
+let graphReady = false;
+let frameUpdating = false;
+let lastRenderTime = 0;
 
-    const E =
-        n * n * Math.PI * Math.PI / 2;
+function energy(n) {
+  if (isOscillator()) {
+    return hbar*omega*(n+0.5);
+  }
+  return E0*n*n;
+}
 
+function getComponents() {
+  switch (scenario.value) {
+    case "eigen":
+      return [{n:Number(nSlider.value),c:1}];
 
-    const phase =
-        E * t / hbar;
+    case "super12":
+      return [
+        {n:1,c:1/Math.sqrt(2)},
+        {n:2,c:1/Math.sqrt(2)}
+      ];
 
+    case "super13":
+      return [
+        {n:1,c:1/Math.sqrt(2)},
+        {n:3,c:1/Math.sqrt(2)}
+      ];
 
-    const x = [];
+    default:
+      return [
+        {n:1,c:1/Math.sqrt(3)},
+        {n:2,c:1/Math.sqrt(3)},
+        {n:3,c:1/Math.sqrt(3)}
+      ];
+  }
+}
 
-    const re = [];
+function gcd(a,b) {
+  while (b !== 0) {
+    const r = a % b;
+    a = b;
+    b = r;
+  }
+  return a;
+}
 
-    const im = [];
+function getPeriodDivisor() {
+  if (isOscillator()) return 1;
+  const squares = getComponents().map(c=>c.n*c.n);
+  return squares.reduce((a,b)=>gcd(a,b));
+}
 
-    const probability = [];
+function getPeriod() {
+  if (isOscillator()) {
+    return 4*Math.PI/omega;
+  }
+  return 2*Math.PI*hbar/(E0*getPeriodDivisor());
+}
 
+function getExactPeriodText() {
+  if (isOscillator()) return "4π/ω";
 
-    for (let i = 0; i < N; i++) {
+  const divisor = getPeriodDivisor();
+  const common = gcd(4,divisor);
+  const numerator = 4/common;
+  const denominator = divisor/common;
 
-        const xx =
-            L * i / (N - 1);
+  if (denominator === 1) {
+    return numerator === 1 ? "1/π" : `${numerator}/π`;
+  }
 
+  return numerator === 1
+    ? `1/(${denominator}π)`
+    : `${numerator}/(${denominator}π)`;
+}
 
-        /*
-            공간 부분
+// 에르미트 다항식 H_n(x)
+function hermitePolynomial(n,x) {
+  if (n === 0) return 1;
+  if (n === 1) return 2*x;
 
-            φ(x)
-            =
-            √(2/L) sin(nπx/L)
-        */
+  let h0 = 1;
+  let h1 = 2*x;
 
-        const amplitude =
-            Math.sqrt(2 / L)
-            *
-            Math.sin(
-                n * Math.PI * xx / L
-            );
+  for (let k=2;k<=n;k++) {
+    const h = 2*x*h1-2*(k-1)*h0;
+    h0 = h1;
+    h1 = h;
+  }
 
+  return h1;
+}
 
-        /*
-            시간 부분
+function factorial(n) {
+  let result = 1;
+  for (let k=2;k<=n;k++) result *= k;
+  return result;
+}
 
-            e^(-iEt/ħ)
+// 정규화된 조화 진동자 고유상태의 공간 부분
+function oscillatorAmplitude(n,x) {
+  const xi = (x-oscillatorCenter)/oscillatorLength;
+  const normalization =
+    1/(Math.pow(Math.PI,0.25)*Math.sqrt(oscillatorLength)*
+    Math.sqrt((2**n)*factorial(n)));
 
-            =
-            cos(Et/ħ)
-            -
-            i sin(Et/ħ)
-        */
+  return normalization*hermitePolynomial(n,xi)*Math.exp(-0.5*xi*xi);
+}
 
+function getWaveData(time=t) {
+  const components = getComponents();
+  const re = [];
+  const im = [];
+  const probability = [];
+  const zeros = [];
 
-        const real =
-            amplitude *
-            Math.cos(phase);
+  for (let i=0;i<N;i++) {
+    let real = 0;
+    let imag = 0;
 
+    for (const c of components) {
+      const amplitude = isOscillator()
+        ? c.c*oscillatorAmplitude(c.n,xValues[i])
+        : c.c*Math.sqrt(2/L)*Math.sin(c.n*Math.PI*xValues[i]/L);
 
-        const imaginary =
-            -amplitude *
-            Math.sin(phase);
-
-
-        x.push(xx);
-
-        re.push(real);
-
-        im.push(imaginary);
-
-
-        /*
-            |ψ|²
-
-            시간 부분의 크기는 1이므로
-            공간 부분의 제곱과 같다.
-        */
-
-        probability.push(
-            amplitude * amplitude
-        );
+      const phase = energy(c.n)*time/hbar;
+      real += amplitude*Math.cos(phase);
+      imag -= amplitude*Math.sin(phase);
     }
 
+    re.push(real);
+    im.push(imag);
+    probability.push(real*real+imag*imag);
+    zeros.push(0);
+  }
 
-    const data = [
+  return {re,im,probability,zeros};
+}
 
-        /* ---------------------------------------------
-           복소 파동함수
-           --------------------------------------------- */
+function getAxisRanges() {
+  let bound;
 
-        {
-            type: "scatter3d",
+  if (isOscillator()) {
+    const components = getComponents();
+    bound = 0;
 
-            mode: "lines",
+    for (const c of components) {
+      const vals = xValues.map(
+        x=>Math.abs(c.c*oscillatorAmplitude(c.n,x))
+      );
+      bound += Math.max(...vals);
+    }
+  } else {
+    const components = getComponents();
+    bound = components.reduce(
+      (sum,c)=>sum+Math.abs(c.c)*Math.sqrt(2/L),0
+    );
+  }
 
-            x: x,
+  return {
+    y:[-1.1*bound,1.1*Math.max(bound,bound*bound)],
+    z:[-1.1*bound,1.1*bound]
+  };
+}
 
-            y: re,
+function getScenarioName() {
+  const names = {
+    eigen:`에너지 고유상태 n = ${nSlider.value}`,
+    super12:"n = 1, 2 중첩 상태",
+    super13:"n = 1, 3 중첩 상태",
+    super123:"n = 1, 2, 3 중첩 상태"
+  };
 
-            z: im,
+  const systemName = isOscillator()
+    ? "조화 진동자"
+    : "무한 퍼텐셜 우물";
 
-            line: {
-                width: 7
-            },
+  return `${systemName} — ${names[scenario.value]}`;
+}
 
-            name: "ψ(x,t)",
+function getGraphVisibility() {
+  return [
+    graphMode.value !== "probability",
+    graphMode.value !== "wave"
+  ];
+}
 
-            hovertemplate:
-                "x = %{x:.3f}" +
-                "<br>Re(ψ) = %{y:.3f}" +
-                "<br>Im(ψ) = %{z:.3f}" +
-                "<extra></extra>"
-        }
+function updateControls() {
+  const period = getPeriod();
 
-    ];
+  timeSlider.min = 0;
+  timeSlider.max = period;
+  timeSlider.step = period/1000;
+  timeSlider.value = Math.min(t,period);
 
+  document.getElementById("tv").textContent = t.toFixed(5);
+  document.getElementById("sv").textContent =
+    Number(speedSlider.value).toFixed(1)+"×";
 
-    /* ---------------------------------------------
-       확률밀도 |ψ|²
-       --------------------------------------------- */
+  if (isOscillator()) {
+    nSlider.min = 0;
+    nSlider.max = 5;
+    if (Number(nSlider.value)<0) nSlider.value = 0;
+  } else {
+    nSlider.min = 1;
+    nSlider.max = 5;
+    if (Number(nSlider.value)<1) nSlider.value = 1;
+  }
 
-    if (
-        document
-            .getElementById("prob")
-            .checked
-    ) {
+  document.getElementById("nv").textContent = nSlider.value;
+  nSlider.disabled = scenario.value !== "eigen";
 
-        data.push({
+  document.getElementById("periodInfo").textContent =
+    `${getScenarioName()} | 한 주기 T = ${getExactPeriodText()} | 현재 시간 t = ${t.toFixed(5)}`;
 
-            type: "scatter3d",
+  document.getElementById("mainFormula").innerHTML =
+    isOscillator()
+      ? "ψₙ(x,t) = NₙHₙ((x−x₀)/a)e<sup>−(x−x₀)²/(2a²)</sup>e<sup>−iω(n+1/2)t</sup>, &nbsp; a = √(ℏ/mω)"
+      : "ψ(x,t) = √(2/L) sin(nπx/L)e<sup>−iEₙt/ℏ</sup>";
+}
 
-            mode: "lines",
+function createLayout() {
+  const ranges = getAxisRanges();
 
-            x: x,
+  return {
+    title:{text:getScenarioName(),font:{size:18}},
+    margin:{l:0,r:0,t:45,b:0},
+    showlegend:true,
+    legend:{x:0.01,y:0.99,bgcolor:"rgba(255,255,255,0.7)"},
+    scene:{
+      xaxis:{title:"위치 x",range:getPositionRange()},
+      yaxis:{title:"Re(ψ) / |ψ|²",range:ranges.y},
+      zaxis:{title:"Im(ψ)",range:ranges.z},
+      aspectmode:"manual",
+      aspectratio:{x:1.5,y:1,z:1},
+      camera:{eye:{x:1.45,y:1.35,z:1.15}}
+    }
+  };
+}
 
-            y: probability,
+function createTraces() {
+  const w = getWaveData();
+  const visibility = getGraphVisibility();
 
-            z: new Array(N).fill(0),
+  return [
+    {
+      type:"scatter3d",
+      mode:"lines",
+      name:"복소 파동함수 ψ",
+      x:xValues,y:w.re,z:w.im,
+      visible:visibility[0],
+      line:{width:5}
+    },
+    {
+      type:"scatter3d",
+      mode:"lines",
+      name:"확률밀도 |ψ|²",
+      x:xValues,y:w.probability,z:w.zeros,
+      visible:visibility[1],
+      line:{width:5,dash:"dash",color:"orange"}
+    }
+  ];
+}
 
-            line: {
-                width: 4,
-                dash: "dash"
-            },
+function integrate(values) {
+  let sum = 0;
+  for (let i=0;i<values.length-1;i++) {
+    sum += (values[i]+values[i+1])*dx/2;
+  }
+  return sum;
+}
 
-            name: "|ψ|²",
+function calculateOperatorValues(w) {
+  const xProb = [];
+  const x2Prob = [];
+  const pIntegrand = [];
 
-            hovertemplate:
-                "x = %{x:.3f}" +
-                "<br>|ψ|² = %{y:.3f}" +
-                "<extra></extra>"
-        });
+  for (let i=0;i<N;i++) {
+    xProb.push(xValues[i]*w.probability[i]);
+    x2Prob.push(xValues[i]*xValues[i]*w.probability[i]);
+  }
+
+  for (let i=0;i<N;i++) {
+    let dRe, dIm;
+
+    if (i===0) {
+      dRe=(w.re[1]-w.re[0])/dx;
+      dIm=(w.im[1]-w.im[0])/dx;
+    } else if (i===N-1) {
+      dRe=(w.re[i]-w.re[i-1])/dx;
+      dIm=(w.im[i]-w.im[i-1])/dx;
+    } else {
+      dRe=(w.re[i+1]-w.re[i-1])/(2*dx);
+      dIm=(w.im[i+1]-w.im[i-1])/(2*dx);
     }
 
+    pIntegrand.push(hbar*(w.re[i]*dIm-w.im[i]*dRe));
+  }
+
+  const norm = integrate(w.probability);
+  const xMean = integrate(xProb)/norm;
+  const x2Mean = integrate(x2Prob)/norm;
+  const pMean = integrate(pIntegrand)/norm;
+
+  if (isOscillator()) {
+    const potentialProb = [];
+    const kineticIntegrand = [];
+
+    for (let i=0;i<N;i++) {
+      const q = xValues[i]-oscillatorCenter;
+      potentialProb.push(0.5*m*omega**2*q*q*w.probability[i]);
+
+      let dRe, dIm;
+      if (i===0) {
+        dRe=(w.re[1]-w.re[0])/dx;
+        dIm=(w.im[1]-w.im[0])/dx;
+      } else if (i===N-1) {
+        dRe=(w.re[i]-w.re[i-1])/dx;
+        dIm=(w.im[i]-w.im[i-1])/dx;
+      } else {
+        dRe=(w.re[i+1]-w.re[i-1])/(2*dx);
+        dIm=(w.im[i+1]-w.im[i-1])/(2*dx);
+      }
+
+      kineticIntegrand.push(
+        hbar*hbar*(dRe*dRe+dIm*dIm)/(2*m)
+      );
+    }
+
+    const kineticMean = integrate(kineticIntegrand)/norm;
+    const potentialMean = integrate(potentialProb)/norm;
+    const energyMean = kineticMean+potentialMean;
+    const p2Mean = 2*m*kineticMean;
 
     return {
-        data,
-        n,
-        t,
-        E,
-        phase
+      norm,xMean,x2Mean,pMean,p2Mean,
+      energyMean,kineticMean,potentialMean
     };
+  }
+
+  const components = getComponents();
+  const energyMean = components.reduce(
+    (sum,c)=>sum+c.c*c.c*energy(c.n),0
+  );
+  const p2Mean = 2*m*energyMean;
+
+  return {
+    norm,xMean,x2Mean,pMean,p2Mean,energyMean,
+    kineticMean:energyMean,
+    potentialMean:0
+  };
 }
 
-
-/* =====================================================
-   그래프 그리기
-   ===================================================== */
-
-function draw() {
-
-    const {
-        data,
-        n,
-        t,
-        E,
-        phase
-    } = makeData();
-
-
-    /*
-        위쪽 숫자만 현재 값으로 변경
-
-        축 자체의 범위와 눈금은 고정
-    */
-
-    document
-        .getElementById("nv")
-        .textContent = n;
-
-
-    document
-        .getElementById("tv")
-        .textContent =
-        t.toFixed(2);
-
-
-    const layout = {
-
-        margin: {
-            l: 0,
-            r: 0,
-            b: 0,
-            t: 50
-        },
-
-
-        title: {
-            text:
-                `n = ${n}    |    t = ${t.toFixed(2)}`,
-
-            x: 0.02,
-
-            xanchor: "left"
-        },
-
-
-        /*
-            매우 중요!
-
-            이 값을 고정하면
-
-            시간 변화
-            ↓
-            그래프 데이터 변경
-            ↓
-            카메라 위치는 그대로 유지
-
-            따라서 재생 중에도
-            마우스로 화면을 돌릴 수 있다.
-        */
-
-        uirevision: "camera-fixed",
-
-
-        scene: {
-
-            /* =========================
-               x축
-               ========================= */
-
-            xaxis: {
-
-                title: "위치 x",
-
-                range: [0, 1],
-
-                dtick: 0.2,
-
-                fixedrange: false
-            },
-
-
-            /* =========================
-               y축
-               ========================= */
-
-            yaxis: {
-
-                title: "Re(ψ) / |ψ|²",
-
-                range: [-1.5, 2.1],
-
-                dtick: 0.5,
-
-                fixedrange: false
-            },
-
-
-            /* =========================
-               z축
-               ========================= */
-
-            zaxis: {
-
-                title: "Im(ψ)",
-
-                range: [-1.5, 1.5],
-
-                dtick: 0.5,
-
-                fixedrange: false
-            },
-
-
-            /* =========================
-               축 비율
-               ========================= */
-
-            aspectmode: "manual",
-
-            aspectratio: {
-
-                x: 1.5,
-
-                y: 1,
-
-                z: 1
-            },
-
-
-            /* =========================
-               처음 화면
-               ========================= */
-
-            camera: {
-
-                eye: {
-
-                    x: 1.45,
-
-                    y: 1.35,
-
-                    z: 1.15
-                }
-            }
-        },
-
-
-        legend: {
-
-            x: 0.02,
-
-            y: 0.98
-        }
-    };
-
-
-    Plotly.react(
-
-        "plot",
-
-        data,
-
-        layout,
-
-        {
-
-            responsive: true,
-
-            displaylogo: false,
-
-            scrollZoom: true
-        }
-    );
+function formatNumber(value) {
+  if (!Number.isFinite(value)) return "계산 불가";
+  if (Math.abs(value)<0.0000005) return "0.00000";
+  return value.toFixed(5);
 }
 
+function formatComplex(re,im) {
+  if (!Number.isFinite(re) || !Number.isFinite(im)) return "계산 불가";
+  const sign = im < 0 ? " − " : " + ";
+  return `${formatNumber(re)}${sign}${formatNumber(Math.abs(im))}i`;
+}
 
-/* =====================================================
-   양자수 변경
-   ===================================================== */
+function magnitudeSquared(re,im) {
+  return re*re+im*im;
+}
 
-document
-    .getElementById("n")
-    .addEventListener(
-        "input",
-        draw
+function calculatePointValues(x,time) {
+  let re = 0;
+  let im = 0;
+  let derivativeRe = 0;
+  let derivativeIm = 0;
+  let p2Re = 0;
+  let p2Im = 0;
+
+  const components = getComponents();
+
+  for (const c of components) {
+    let amplitude, derivativeAmplitude, p2Amplitude;
+
+    if (isOscillator()) {
+      const q = x-oscillatorCenter;
+      const xi = q/oscillatorLength;
+
+      amplitude = c.c*oscillatorAmplitude(c.n,x);
+
+      const normFactor =
+        c.c/(Math.pow(Math.PI,0.25)*Math.sqrt(oscillatorLength)*
+        Math.sqrt((2**c.n)*factorial(c.n)));
+
+      derivativeAmplitude = normFactor*Math.exp(-0.5*xi*xi)*
+        ((c.n === 0 ? 0 : 2*c.n*hermitePolynomial(c.n-1,xi))-
+        xi*hermitePolynomial(c.n,xi))/oscillatorLength;
+
+      p2Amplitude = 2*m*(energy(c.n)-
+        0.5*m*omega**2*q*q)*amplitude;
+    } else {
+      const k = c.n*Math.PI/L;
+      amplitude = c.c*Math.sqrt(2/L)*Math.sin(k*x);
+      derivativeAmplitude = c.c*Math.sqrt(2/L)*k*Math.cos(k*x);
+      p2Amplitude = hbar*hbar*c.c*Math.sqrt(2/L)*k*k*Math.sin(k*x);
+    }
+
+    const phase = energy(c.n)*time/hbar;
+    const cosPhase = Math.cos(phase);
+    const sinPhase = Math.sin(phase);
+
+    re += amplitude*cosPhase;
+    im -= amplitude*sinPhase;
+    derivativeRe += derivativeAmplitude*cosPhase;
+    derivativeIm -= derivativeAmplitude*sinPhase;
+    p2Re += p2Amplitude*cosPhase;
+    p2Im -= p2Amplitude*sinPhase;
+  }
+
+  const probability = magnitudeSquared(re,im);
+  const pRe = hbar*derivativeIm;
+  const pIm = -hbar*derivativeRe;
+
+  const xRe = x*re;
+  const xIm = x*im;
+  const x2Re = x*x*re;
+  const x2Im = x*x*im;
+
+  const kineticRe = p2Re/(2*m);
+  const kineticIm = p2Im/(2*m);
+
+  let potentialRe = 0;
+  let potentialIm = 0;
+
+  if (isOscillator()) {
+    const potential = 0.5*m*omega**2*(x-oscillatorCenter)**2;
+    potentialRe = potential*re;
+    potentialIm = potential*im;
+  }
+
+  const hRe = kineticRe+potentialRe;
+  const hIm = kineticIm+potentialIm;
+
+  return {
+    re,im,probability,
+    xRe,xIm,x2Re,x2Im,
+    pRe,pIm,p2Re,p2Im,
+    hRe,hIm,kineticRe,kineticIm,
+    potentialRe,potentialIm
+  };
+}
+
+function updatePointPanel() {
+  const rawX = Number(xInput.value);
+  const xRange = getPositionRange();
+
+  if (xInput.value.trim()==="" || !Number.isFinite(rawX)) {
+    document.getElementById("pointTime").textContent =
+      "위치 x에 " + xRange[0] + "부터 " + xRange[1] + " 사이의 수를 입력하세요.";
+    document.getElementById("pointList").innerHTML = "";
+    return;
+  }
+
+  if (rawX<xRange[0] || rawX>xRange[1]) {
+    document.getElementById("pointTime").textContent =
+      "위치 x는 " + xRange[0] + "부터 " + xRange[1] + " 사이여야 합니다.";
+    document.getElementById("pointList").innerHTML = "";
+    return;
+  }
+
+  const x = rawX;
+  const v = calculatePointValues(x,t);
+
+  document.getElementById("pointTime").textContent =
+    `현재 위치 x = ${formatNumber(x)}, 시간 t = ${formatNumber(t)}`;
+
+  const items = [
+    {
+      name:"파동함수",
+      formula:"ψ(x,t)",
+      value:formatComplex(v.re,v.im),
+      magnitudeLabel:"|ψ(x,t)|²",
+      magnitude:v.probability
+    },
+    {
+      name:"위치 연산자 적용값",
+      formula:"x̂ψ = xψ",
+      value:formatComplex(v.xRe,v.xIm),
+      magnitudeLabel:"|x̂ψ|²",
+      magnitude:magnitudeSquared(v.xRe,v.xIm)
+    },
+    {
+      name:"위치 제곱 연산자 적용값",
+      formula:"x̂²ψ = x²ψ",
+      value:formatComplex(v.x2Re,v.x2Im),
+      magnitudeLabel:"|x̂²ψ|²",
+      magnitude:magnitudeSquared(v.x2Re,v.x2Im)
+    },
+    {
+      name:"운동량 연산자 적용값",
+      formula:"p̂ψ = −iℏ ∂ψ/∂x",
+      value:formatComplex(v.pRe,v.pIm),
+      magnitudeLabel:"|p̂ψ|²",
+      magnitude:magnitudeSquared(v.pRe,v.pIm)
+    },
+    {
+      name:"운동량 제곱 연산자 적용값",
+      formula:"p̂²ψ = −ℏ² ∂²ψ/∂x²",
+      value:formatComplex(v.p2Re,v.p2Im),
+      magnitudeLabel:"|p̂²ψ|²",
+      magnitude:magnitudeSquared(v.p2Re,v.p2Im)
+    },
+    {
+      name:"해밀토니안 적용값",
+      formula:"Ĥψ = T̂ψ + V̂ψ",
+      value:formatComplex(v.hRe,v.hIm),
+      magnitudeLabel:"|Ĥψ|²",
+      magnitude:magnitudeSquared(v.hRe,v.hIm)
+    },
+    {
+      name:"운동에너지 연산자 적용값",
+      formula:"T̂ψ = p̂²ψ/(2m)",
+      value:formatComplex(v.kineticRe,v.kineticIm),
+      magnitudeLabel:"|T̂ψ|²",
+      magnitude:magnitudeSquared(v.kineticRe,v.kineticIm)
+    },
+    {
+      name:"퍼텐셜 에너지 연산자 적용값",
+      formula:"V̂ψ = V(x)ψ",
+      value:formatComplex(v.potentialRe,v.potentialIm),
+      magnitudeLabel:"|V̂ψ|²",
+      magnitude:magnitudeSquared(v.potentialRe,v.potentialIm)
+    }
+  ];
+
+  document.getElementById("pointList").innerHTML =
+    items.map(item=>`
+      <div class="pointItem">
+        <div class="pointName">${item.name}</div>
+        <div class="pointFormula">${item.formula}</div>
+        <div class="pointValue">${item.value}</div>
+        <div class="pointMagnitude">
+          ${item.magnitudeLabel} = ${formatNumber(item.magnitude)}
+        </div>
+      </div>
+    `).join("");
+}
+
+function updateOperatorPanel() {
+  const w = getWaveData();
+  const v = calculateOperatorValues(w);
+
+  const items = [
+    {
+      name:"위치 연산자",
+      formula:"x̂ = x",
+      value:`⟨x̂⟩ = ${formatNumber(v.xMean)}`
+    },
+    {
+      name:"위치 제곱 연산자",
+      formula:"x̂² = x²",
+      value:`⟨x̂²⟩ = ${formatNumber(v.x2Mean)}`
+    },
+    {
+      name:"운동량 연산자",
+      formula:"p̂ = −iℏ ∂/∂x",
+      value:`⟨p̂⟩ = ${formatNumber(v.pMean)}`
+    },
+    {
+      name:"운동량 제곱 연산자",
+      formula:"p̂² = −ℏ² ∂²/∂x²",
+      value:`⟨p̂²⟩ = ${formatNumber(v.p2Mean)}`
+    },
+    {
+      name:"해밀토니안",
+      formula:"Ĥ = −(ℏ²/2m) ∂²/∂x² + V(x)",
+      value:`⟨Ĥ⟩ = ${formatNumber(v.energyMean)}`
+    },
+    {
+      name:"운동 에너지",
+      formula:"T̂ = p̂²/(2m)",
+      value:`⟨T̂⟩ = ${formatNumber(v.kineticMean)}`
+    },
+    {
+      name:"퍼텐셜 에너지",
+      formula:"V̂ = V(x)",
+      value:`⟨V̂⟩ = ${formatNumber(v.potentialMean)}`
+    }
+  ];
+
+  document.getElementById("operatorList").innerHTML =
+    items.map(item=>`
+      <div class="operatorItem">
+        <div class="operatorName">${item.name}</div>
+        <div class="operatorFormula">${item.formula}</div>
+        <div class="operatorValue">${item.value}</div>
+      </div>
+    `).join("");
+}
+
+async function renderFrame() {
+  if (!graphReady || frameUpdating) return;
+
+  frameUpdating = true;
+  try {
+    const w = getWaveData();
+    const visibility = getGraphVisibility();
+
+    await Plotly.update(
+      graph,
+      {
+        x:[xValues,xValues],
+        y:[w.re,w.probability],
+        z:[w.im,w.zeros],
+        visible:visibility
+      },
+      {},
+      [0,1]
     );
 
+    updateOperatorPanel();
+    updatePointPanel();
+  } finally {
+    frameUpdating = false;
+  }
+}
 
-/* =====================================================
-   시간 슬라이더
-   ===================================================== */
+async function updateAxisRanges() {
+  if (!graphReady) return;
 
-document
-    .getElementById("time")
-    .addEventListener(
-        "input",
-        draw
-    );
+  const ranges = getAxisRanges();
+  const xRange = getPositionRange();
 
+  await Plotly.relayout(graph,{
+    "scene.xaxis.range":xRange,
+    "scene.yaxis.range":ranges.y,
+    "scene.zaxis.range":ranges.z,
+    "title.text":getScenarioName()
+  });
+}
 
-/* =====================================================
-   확률밀도 표시
-   ===================================================== */
+async function updateAll() {
+  updateControls();
 
-document
-    .getElementById("prob")
-    .addEventListener(
-        "change",
-        draw
-    );
+  if (!graphReady) return;
 
+  await updateAxisRanges();
+  await renderFrame();
+}
 
-/* =====================================================
-   재생 속도 표시
-   ===================================================== */
+function stopAnimation() {
+  playing = false;
+  lastFrame = null;
 
-document
-    .getElementById("speed")
-    .addEventListener(
-        "input",
-        () => {
+  if (animationId !== null) {
+    cancelAnimationFrame(animationId);
+    animationId = null;
+  }
 
-            const speed =
-                Number(
-                    document
-                        .getElementById("speed")
-                        .value
-                );
+  playButton.textContent = "▶ 재생";
+}
 
+function animationStep(timestamp) {
+  if (!playing) return;
 
-            document
-                .getElementById("sv")
-                .textContent =
-                speed.toFixed(1) + "×";
-        }
-    );
+  if (lastFrame === null) lastFrame = timestamp;
 
+  const delta = Math.min((timestamp-lastFrame)/1000,0.05);
+  lastFrame = timestamp;
 
-/* =====================================================
-   재생
-   ===================================================== */
+  const period = getPeriod();
+  t += delta*Number(speedSlider.value)*period/5;
 
-let playing = false;
+  if (t>=period) t-=period;
 
-let timer = null;
+  updateControls();
 
+  if (timestamp-lastRenderTime>=1000/30 && !frameUpdating) {
+    lastRenderTime = timestamp;
+    renderFrame();
+  }
 
-document
-    .getElementById("play")
-    .addEventListener(
-        "click",
-        () => {
+  animationId = requestAnimationFrame(animationStep);
+}
 
-            playing = !playing;
+playButton.addEventListener("click",()=>{
+  if (playing) {
+    stopAnimation();
+  } else {
+    playing = true;
+    lastFrame = null;
+    lastRenderTime = 0;
+    playButton.textContent = "⏸ 일시정지";
+    animationId = requestAnimationFrame(animationStep);
+  }
+});
 
+document.getElementById("reset").addEventListener("click",async()=>{
+  stopAnimation();
+  t = 0;
+  await updateAll();
+});
 
-            document
-                .getElementById("play")
-                .textContent =
-                playing
-                ? "⏸ 정지"
-                : "▶ 재생";
+system.addEventListener("change",async()=>{
+  stopAnimation();
+  t = 0;
+  updatePositionGrid();
+  await updateAll();
+});
 
+scenario.addEventListener("change",async()=>{
+  stopAnimation();
+  t = 0;
+  await updateAll();
+});
 
-            if (playing) {
+nSlider.addEventListener("input",async()=>{
+  stopAnimation();
+  t = 0;
+  await updateAll();
+});
 
-                timer = setInterval(
-                    () => {
+timeSlider.addEventListener("input",async()=>{
+  t = Number(timeSlider.value);
+  updateControls();
+  await renderFrame();
+});
 
-                        const slider =
-                            document
-                                .getElementById("time");
+speedSlider.addEventListener("input",()=>{
+  document.getElementById("sv").textContent =
+    Number(speedSlider.value).toFixed(1)+"×";
+});
 
+graphMode.addEventListener("change",renderFrame);
+xInput.addEventListener("input",updatePointPanel);
 
-                        /*
-                            기본 증가량
+document.querySelectorAll("#periodButtons button").forEach(button=>{
+  button.addEventListener("click",async()=>{
+    const fraction = Number(button.dataset.fraction);
+    t = getPeriod()*fraction;
+    updateControls();
+    await renderFrame();
+  });
+});
 
-                            0.025
+async function initialize() {
+  updatePositionGrid();
+  updateControls();
 
-                            여기에 사용자가 정한
-                            재생 속도를 곱한다.
-                        */
+  await Plotly.newPlot(
+    graph,
+    createTraces(),
+    createLayout(),
+    {responsive:true,displaylogo:false}
+  );
 
-                        const speed =
-                            Number(
-                                document
-                                    .getElementById("speed")
-                                    .value
-                            );
+  graphReady = true;
+  updateOperatorPanel();
+  updatePointPanel();
+}
 
-
-                        let t =
-                            Number(slider.value)
-                            +
-                            0.025 * speed;
-
-
-                        /*
-                            끝까지 가면 다시 처음
-                        */
-
-                        if (
-                            t >
-                            Number(slider.max)
-                        ) {
-
-                            t = 0;
-
-                        }
-
-
-                        slider.value = t;
-
-
-                        /*
-                            그래프만 업데이트
-
-                            카메라 위치는 유지됨
-                        */
-
-                        draw();
-
-                    },
-
-                    30
-                );
-
-            }
-
-            else {
-
-                clearInterval(timer);
-
-            }
-
-        }
-    );
-
-
-/* =====================================================
-   초기화
-   ===================================================== */
-
-document
-    .getElementById("reset")
-    .addEventListener(
-        "click",
-        () => {
-
-            document
-                .getElementById("time")
-                .value = 0;
-
-
-            draw();
-
-        }
-    );
-
-
-/* =====================================================
-   최초 실행
-   ===================================================== */
-
-draw();
-
+initialize();
 </script>
-
 </body>
 </html>
-```
-
