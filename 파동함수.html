@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -7,357 +6,443 @@
 <title>복소 파동함수 3D 시각화</title>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <style>
-  body { margin:0; font-family:Arial,sans-serif; background:#f5f5f5; }
-  #top { padding:14px 20px; background:white; border-bottom:1px solid #ddd; }
-  h2 { margin:0 0 8px; }
-  .formula { font-family:"Times New Roman",serif; font-size:18px; margin-bottom:12px; }
-  .controls { display:flex; flex-wrap:wrap; gap:12px; align-items:center; }
-  label { white-space:nowrap; }
-  input[type="range"] { width:180px; vertical-align:middle; }
-  select,button,input[type="number"] {
-    padding:7px 10px; border:1px solid #bbb; border-radius:6px; background:white;
-  }
-  button { cursor:pointer; }
-  #workspace { display:flex; width:100%; align-items:stretch; }
-  #plot { flex:1; min-width:0; height:calc(100vh - 220px); min-height:520px; }
-  #operatorPanel,#pointPanel {
-    width:300px;
-    flex-shrink:0;
-    box-sizing:border-box;
-    padding:14px;
-    background:white;
-    height:calc(100vh - 220px);
-    min-height:520px;
-    overflow-y:auto;
-  }
-  #operatorPanel { border-left:1px solid #ddd; width:320px; }
-  #pointPanel { border-right:1px solid #ddd; }
-  #operatorPanel h3,#pointPanel h3 { margin:0 0 8px; font-size:18px; }
-  #operatorNote,#pointNote {
-    font-size:12px; color:#555; line-height:1.5; margin-bottom:12px;
-  }
-  .operatorItem,.pointItem { padding:10px 0; border-bottom:1px solid #e5e5e5; }
-  .operatorName,.pointName { font-weight:bold; font-size:14px; margin-bottom:5px; }
-  .operatorFormula,.pointFormula {
-    font-family:"Times New Roman",serif;
-    font-size:15px; line-height:1.6; overflow-wrap:anywhere;
-  }
-  .operatorValue,.pointValue {
-    margin-top:5px; font-size:13px; color:#333; overflow-wrap:anywhere;
-  }
-  .pointMagnitude {
-    margin-top:4px;
-    font-size:13px;
-    color:#555;
-    overflow-wrap:anywhere;
-  }
-  .value { display:inline-block; min-width:65px; text-align:right; font-variant-numeric:tabular-nums; }
-  #periodInfo { margin-top:10px; color:#444; font-size:14px; }
-  #periodButtons {
-    display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:12px;
-  }
-  #periodButtons span { font-size:14px; color:#444; margin-right:2px; }
-  #periodButtons button { min-width:58px; }
-  #xInput { width:100%; box-sizing:border-box; margin:5px 0 10px; }
-  .inputLabel { display:block; font-size:13px; font-weight:bold; }
-  @media (max-width:1100px) {
-    #workspace { flex-wrap:wrap; }
-    #pointPanel,#operatorPanel { width:50%; height:auto; min-height:0; max-height:420px; }
-    #plot { flex-basis:100%; order:0; height:65vh; min-height:450px; }
-    #pointPanel { order:1; border-right:1px solid #ddd; border-top:1px solid #ddd; }
-    #operatorPanel { order:2; border-left:1px solid #ddd; border-top:1px solid #ddd; }
-  }
-  @media (max-width:600px) {
-    #pointPanel,#operatorPanel { width:100%; max-height:none; }
-    #pointPanel { border-right:none; }
-    #operatorPanel { border-left:none; }
-  }
+body{margin:0;font-family:Arial,sans-serif;background:#f5f5f5}
+#top{padding:14px 20px;background:white;border-bottom:1px solid #ddd}
+h2{margin:0 0 8px}
+.formula{font-family:"Times New Roman",serif;font-size:18px;margin-bottom:12px}
+.controls{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+label{white-space:nowrap}
+input[type=range]{width:180px;vertical-align:middle}
+select,button,input[type=number]{padding:7px 10px;border:1px solid #bbb;border-radius:6px;background:white}
+button{cursor:pointer}
+#workspace{display:flex;width:100%;align-items:stretch}
+#plot{flex:1;min-width:0;height:calc(100vh - 220px);min-height:520px}
+#operatorPanel,#pointPanel{width:300px;flex-shrink:0;box-sizing:border-box;padding:14px;background:white;height:calc(100vh - 220px);min-height:520px;overflow-y:auto}
+#operatorPanel{border-left:1px solid #ddd;width:320px}
+#pointPanel{border-right:1px solid #ddd}
+#operatorPanel h3,#pointPanel h3{margin:0 0 8px;font-size:18px}
+#operatorNote,#pointNote{font-size:12px;color:#555;line-height:1.5;margin-bottom:12px}
+.operatorItem,.pointItem{padding:10px 0;border-bottom:1px solid #e5e5e5}
+.operatorName,.pointName{font-weight:bold;font-size:14px;margin-bottom:5px}
+.operatorFormula,.pointFormula{font-family:"Times New Roman",serif;font-size:15px;line-height:1.6;overflow-wrap:anywhere}
+.operatorValue,.pointValue{margin-top:5px;font-size:13px;color:#333;overflow-wrap:anywhere}
+.pointMagnitude{margin-top:4px;font-size:13px;color:#555;overflow-wrap:anywhere}
+.value{display:inline-block;min-width:65px;text-align:right;font-variant-numeric:tabular-nums}
+#periodInfo{margin-top:10px;color:#444;font-size:14px}
+#barrierInfo{margin-top:8px;padding:8px 11px;border:1px solid #d8e5ee;border-radius:7px;background:#f4f9fc;color:#243746;font-size:14px}
+#barrierInfo[hidden]{display:none}
+#periodButtons{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px}
+#periodButtons span{font-size:14px;color:#444;margin-right:2px}
+#periodButtons button{min-width:58px}
+#xInput{width:100%;box-sizing:border-box;margin:5px 0 10px}
+.inputLabel{display:block;font-size:13px;font-weight:bold}
+@media(max-width:1100px){
+#workspace{flex-wrap:wrap}
+#pointPanel,#operatorPanel{width:50%;height:auto;min-height:0;max-height:420px}
+#plot{flex-basis:100%;order:0;height:65vh;min-height:450px}
+#pointPanel{order:1;border-right:1px solid #ddd;border-top:1px solid #ddd}
+#operatorPanel{order:2;border-left:1px solid #ddd;border-top:1px solid #ddd}
+}
+@media(max-width:600px){
+#pointPanel,#operatorPanel{width:100%;max-height:none}
+#pointPanel{border-right:none}
+#operatorPanel{border-left:none}
+}
 </style>
 </head>
 <body>
-
 <div id="top">
-  <h2>복소 파동함수의 시간 변화</h2>
-  <div class="formula" id="mainFormula">
-    ψ(x,t) = √(2/L) sin(nπx/L)e<sup>−iEₙt/ℏ</sup>
-  </div>
-
-  <div class="controls">
-    <label>
-      퍼텐셜:
-      <select id="system">
-        <option value="well">무한 퍼텐셜 우물</option>
-        <option value="oscillator">조화 진동자</option>
-      </select>
-    </label>
-
-    <label>
-      파동함수 종류:
-      <select id="scenario">
-        <option value="eigen">에너지 고유상태</option>
-        <option value="super12">n = 1, 2 중첩</option>
-        <option value="super13">n = 1, 3 중첩</option>
-        <option value="super123">n = 1, 2, 3 중첩</option>
-      </select>
-    </label>
-
-    <label>
-      양자수 n:
-      <input id="n" type="range" min="1" max="5" step="1" value="1">
-      <span id="nv" class="value">1</span>
-    </label>
-
-    <label>
-      시간 t:
-      <input id="time" type="range" min="0" max="1" step="0.001" value="0">
-      <span id="tv" class="value">0.000</span>
-    </label>
-
-    <label>
-      재생 속도:
-      <input id="speed" type="range" min="0.1" max="3" step="0.1" value="1">
-      <span id="sv" class="value">1.0×</span>
-    </label>
-
-    <button id="play">▶ 재생</button>
-    <button id="reset">↺ 초기화</button>
-
-    <label>
-      그래프:
-      <select id="graphMode">
-        <option value="both">둘 다</option>
-        <option value="wave">파동함수만</option>
-        <option value="probability">확률 밀도만</option>
-      </select>
-    </label>
-  </div>
-
-  <div id="periodInfo"></div>
-
-  <div id="periodButtons">
-    <span>주기 위치:</span>
-    <button data-fraction="0">0</button>
-    <button data-fraction="0.25">T/4</button>
-    <button data-fraction="0.5">T/2</button>
-    <button data-fraction="0.75">3T/4</button>
-    <button data-fraction="1">T</button>
-  </div>
+<h2>복소 파동함수의 시간 변화</h2>
+<div class="formula" id="mainFormula">
+ψ(x,t) = √(2/L) sin(nπx/L)e<sup>−iEₙt/ℏ</sup>
+</div>
+<div class="controls">
+<label>파동함수 유형:
+<select id="system">
+<option value="well">무한 퍼텐셜 우물</option>
+<option value="oscillator">조화 진동자</option>
+<option value="tunneling">양자 터널링</option>
+</select>
+</label>
+<label>상태:
+<select id="scenario">
+<option value="eigen">에너지 고유상태</option>
+<option value="super12">n = 1, 2 중첩</option>
+<option value="super13">n = 1, 3 중첩</option>
+<option value="super123">n = 1, 2, 3 중첩</option>
+</select>
+</label>
+<label>양자수 n:
+<input id="n" type="range" min="1" max="5" step="1" value="1">
+<span id="nv" class="value">1</span>
+</label>
+<label>시간 t:
+<input id="time" type="range" min="0" max="1" step="0.001" value="0">
+<span id="tv" class="value">0.000</span>
+</label>
+<label>재생 속도:
+<input id="speed" type="range" min="0.1" max="3" step="0.1" value="1">
+<span id="sv" class="value">1.0×</span>
+</label>
+<button id="play">▶ 재생</button>
+<button id="reset">↺ 초기화</button>
+<label>그래프:
+<select id="graphMode">
+<option value="both">둘 다</option>
+<option value="wave">파동함수만</option>
+<option value="probability">확률 밀도만</option>
+</select>
+</label>
+</div>
+<div id="periodInfo"></div>
+<div id="barrierInfo" hidden></div>
+<div id="periodButtons">
+<span id="fractionTitle">주기 위치:</span>
+<button data-fraction="0">0</button>
+<button data-fraction="0.25">T/4</button>
+<button data-fraction="0.5">T/2</button>
+<button data-fraction="0.75">3T/4</button>
+<button data-fraction="1">T</button>
+</div>
 </div>
 
 <div id="workspace">
-  <aside id="pointPanel">
-    <h3>위치별 파동함수 값</h3>
-    <div id="pointNote">
-      입력한 위치 x와 현재 시간 t에서의 파동함수 및 연산자 적용값입니다.
-    </div>
-
-    <label class="inputLabel" for="xInput">위치 x (0 ≤ x ≤ 1)</label>
-    <input id="xInput" type="number" min="0" max="1" step="0.01" value="0.5">
-
-    <div id="pointTime" class="operatorValue"></div>
-    <div id="pointList"></div>
-  </aside>
-
-  <div id="plot"></div>
-
-  <aside id="operatorPanel">
-    <h3>연산자 및 기댓값</h3>
-    <div id="operatorNote">
-      현재 선택한 상태에서의 연산자 기댓값입니다.
-      단위는 L = ℏ = m = 1로 설정한 무차원 단위입니다.
-    </div>
-    <div id="operatorList"></div>
-  </aside>
+<aside id="pointPanel">
+<h3>위치별 파동함수 값</h3>
+<div id="pointNote">입력한 위치 x와 현재 시간 t에서의 파동함수 및 연산자 적용값입니다.</div>
+<label class="inputLabel" for="xInput">위치 x (0 ≤ x ≤ 1)</label>
+<input id="xInput" type="number" min="0" max="1" step="0.01" value="0.5">
+<div id="pointTime" class="operatorValue"></div>
+<div id="pointList"></div>
+</aside>
+<div id="plot"></div>
+<aside id="operatorPanel">
+<h3>연산자 및 기댓값</h3>
+<div id="operatorNote">현재 선택한 상태에서의 연산자 기댓값입니다. 단위는 L = ℏ = m = 1로 설정한 무차원 단위입니다.</div>
+<div id="operatorList"></div>
+</aside>
 </div>
 
 <script>
-const N = 300;
-const L = 1;
-const hbar = 1;
-const m = 1;
-const E0 = Math.PI ** 2 * hbar ** 2 / (2 * m * L ** 2);
+const N=300;
+const L=1;
+const hbar=1;
+const m=1;
+const E0=Math.PI**2*hbar**2/(2*m*L**2);
 
-// 조화 진동자 설정
-const oscillatorLength = 0.4;
-const omega = hbar/(m*oscillatorLength**2);
-const oscillatorCenter = 1;
+const tunnelMin=0;
+const tunnelMax=3;
+const tunnelDt=0.00002;
+const tunnelMaxTime=0.08;
+const barrierLeft=0.85;
+const barrierRight=0.95;
+const barrierHeight=260;
+const packetK=18;
+const packetSigma=0.055;
+const packetCenter=0.30;
 
-const graph = document.getElementById("plot");
-const system = document.getElementById("system");
-const scenario = document.getElementById("scenario");
-const nSlider = document.getElementById("n");
-const timeSlider = document.getElementById("time");
-const speedSlider = document.getElementById("speed");
-const graphMode = document.getElementById("graphMode");
-const playButton = document.getElementById("play");
-const xInput = document.getElementById("xInput");
+let tunnelRe=[];
+let tunnelIm=[];
+let tunnelTime=0;
 
-let xValues = [];
-let dx = L/(N-1);
+const oscillatorLength=0.4;
+const omega=hbar/(m*oscillatorLength**2);
+const oscillatorCenter=1;
 
-function isOscillator() {
-  return system.value === "oscillator";
+const graph=document.getElementById("plot");
+const systemSelect=document.getElementById("system");
+const scenario=document.getElementById("scenario");
+const nSlider=document.getElementById("n");
+const timeSlider=document.getElementById("time");
+const speedSlider=document.getElementById("speed");
+const graphMode=document.getElementById("graphMode");
+const playButton=document.getElementById("play");
+const xInput=document.getElementById("xInput");
+
+let xValues=[];
+let dx=L/(N-1);
+let t=0;
+let playing=false;
+let lastFrame=null;
+let animationId=null;
+let graphReady=false;
+let frameUpdating=false;
+let lastRenderTime=0;
+
+function isTunneling(){return systemSelect.value==="tunneling"}
+function isOscillator(){return systemSelect.value==="oscillator"}
+
+function getPositionRange(){
+  if(isTunneling())return [tunnelMin,tunnelMax];
+  return isOscillator()?[0,2*L]:[0,L];
 }
 
-function getPositionRange() {
-  return isOscillator() ? [0,2*L] : [0,L];
+function updatePositionGrid(){
+  const range=getPositionRange();
+  const xmin=range[0],xmax=range[1];
+  xValues=Array.from({length:N},(_,i)=>xmin+(xmax-xmin)*i/(N-1));
+  dx=(xmax-xmin)/(N-1);
+  xInput.min=xmin;
+  xInput.max=xmax;
+  document.querySelector('label[for="xInput"]').textContent=
+    "위치 x ("+xmin+" ≤ x ≤ "+xmax+")";
 }
 
-function updatePositionGrid() {
-  const range = getPositionRange();
-  const xmin = range[0];
-  const xmax = range[1];
+function energy(n){
+  return isOscillator()?hbar*omega*(n+0.5):E0*n*n;
+}
 
-  xValues = Array.from(
-    {length:N},
-    (_,i)=>xmin+(xmax-xmin)*i/(N-1)
-  );
-
-  dx = (xmax-xmin)/(N-1);
-  xInput.min = xmin;
-  xInput.max = xmax;
-
-  document.querySelector('label[for="xInput"]').textContent =
-    "위치 x (" + xmin + " ≤ x ≤ " + xmax + ")";
-
-  const currentX = Number(xInput.value);
-  if (!Number.isFinite(currentX) || currentX < xmin || currentX > xmax) {
-    xInput.value = (xmin+xmax)/2;
+function getComponents(){
+  switch(scenario.value){
+    case "eigen":return [{n:Number(nSlider.value),c:1}];
+    case "super12":return [{n:1,c:1/Math.sqrt(2)},{n:2,c:1/Math.sqrt(2)}];
+    case "super13":return [{n:1,c:1/Math.sqrt(2)},{n:3,c:1/Math.sqrt(2)}];
+    default:return [
+      {n:1,c:1/Math.sqrt(3)},
+      {n:2,c:1/Math.sqrt(3)},
+      {n:3,c:1/Math.sqrt(3)}
+    ];
   }
 }
 
-let t = 0;
-let playing = false;
-let lastFrame = null;
-let animationId = null;
-let graphReady = false;
-let frameUpdating = false;
-let lastRenderTime = 0;
-
-function energy(n) {
-  if (isOscillator()) {
-    return hbar*omega*(n+0.5);
-  }
-  return E0*n*n;
-}
-
-function getComponents() {
-  switch (scenario.value) {
-    case "eigen":
-      return [{n:Number(nSlider.value),c:1}];
-
-    case "super12":
-      return [
-        {n:1,c:1/Math.sqrt(2)},
-        {n:2,c:1/Math.sqrt(2)}
-      ];
-
-    case "super13":
-      return [
-        {n:1,c:1/Math.sqrt(2)},
-        {n:3,c:1/Math.sqrt(2)}
-      ];
-
-    default:
-      return [
-        {n:1,c:1/Math.sqrt(3)},
-        {n:2,c:1/Math.sqrt(3)},
-        {n:3,c:1/Math.sqrt(3)}
-      ];
-  }
-}
-
-function gcd(a,b) {
-  while (b !== 0) {
-    const r = a % b;
-    a = b;
-    b = r;
-  }
+function gcd(a,b){
+  while(b!==0){const r=a%b;a=b;b=r}
   return a;
 }
 
-function getPeriodDivisor() {
-  if (isOscillator()) return 1;
-  const squares = getComponents().map(c=>c.n*c.n);
-  return squares.reduce((a,b)=>gcd(a,b));
+function getPeriodDivisor(){
+  if(isOscillator())return 1;
+  return getComponents().map(c=>c.n*c.n).reduce((a,b)=>gcd(a,b));
 }
 
-function getPeriod() {
-  if (isOscillator()) {
-    return 4*Math.PI/omega;
-  }
+function getPeriod(){
+  if(isOscillator())return 2*Math.PI/omega;
   return 2*Math.PI*hbar/(E0*getPeriodDivisor());
 }
 
-function getExactPeriodText() {
-  if (isOscillator()) return "4π/ω";
-
-  const divisor = getPeriodDivisor();
-  const common = gcd(4,divisor);
-  const numerator = 4/common;
-  const denominator = divisor/common;
-
-  if (denominator === 1) {
-    return numerator === 1 ? "1/π" : `${numerator}/π`;
-  }
-
-  return numerator === 1
-    ? `1/(${denominator}π)`
-    : `${numerator}/(${denominator}π)`;
+function getExactPeriodText(){
+  if(isOscillator())return "2π/ω";
+  const divisor=getPeriodDivisor();
+  const common=gcd(4,divisor);
+  const numerator=4/common;
+  const denominator=divisor/common;
+  if(denominator===1)return numerator===1?"1/π":`${numerator}/π`;
+  return numerator===1?`1/(${denominator}π)`:`${numerator}/(${denominator}π)`;
 }
 
-// 에르미트 다항식 H_n(x)
-function hermitePolynomial(n,x) {
-  if (n === 0) return 1;
-  if (n === 1) return 2*x;
-
-  let h0 = 1;
-  let h1 = 2*x;
-
-  for (let k=2;k<=n;k++) {
-    const h = 2*x*h1-2*(k-1)*h0;
-    h0 = h1;
-    h1 = h;
+function hermite(n,x){
+  if(n===0)return 1;
+  if(n===1)return 2*x;
+  let hm2=1,hm1=2*x;
+  for(let k=2;k<=n;k++){
+    const h=2*x*hm1-2*(k-1)*hm2;
+    hm2=hm1;
+    hm1=h;
   }
-
-  return h1;
+  return hm1;
 }
 
-function factorial(n) {
-  let result = 1;
-  for (let k=2;k<=n;k++) result *= k;
+function factorial(n){
+  let result=1;
+  for(let i=2;i<=n;i++)result*=i;
   return result;
 }
 
-// 정규화된 조화 진동자 고유상태의 공간 부분
-function oscillatorAmplitude(n,x) {
-  const xi = (x-oscillatorCenter)/oscillatorLength;
-  const normalization =
-    1/(Math.pow(Math.PI,0.25)*Math.sqrt(oscillatorLength)*
-    Math.sqrt((2**n)*factorial(n)));
-
-  return normalization*hermitePolynomial(n,xi)*Math.exp(-0.5*xi*xi);
+function oscillatorAmplitude(n,x){
+  const xi=(x-oscillatorCenter)/oscillatorLength;
+  const normalization=1/Math.sqrt(
+    oscillatorLength*Math.sqrt(Math.PI)*(2**n)*factorial(n)
+  );
+  return normalization*hermite(n,xi)*Math.exp(-0.5*xi*xi);
 }
 
-function getWaveData(time=t) {
-  const components = getComponents();
-  const re = [];
-  const im = [];
-  const probability = [];
-  const zeros = [];
+function tunnelPotential(x){
+  return x>=barrierLeft&&x<=barrierRight?barrierHeight:0;
+}
 
-  for (let i=0;i<N;i++) {
-    let real = 0;
-    let imag = 0;
+function integrate(values){
+  let sum=0;
+  for(let i=0;i<values.length-1;i++)
+    sum+=(values[i]+values[i+1])*dx/2;
+  return sum;
+}
 
-    for (const c of components) {
-      const amplitude = isOscillator()
-        ? c.c*oscillatorAmplitude(c.n,xValues[i])
-        : c.c*Math.sqrt(2/L)*Math.sin(c.n*Math.PI*xValues[i]/L);
+function initializeTunnelPacket(){
+  tunnelRe=xValues.map(x=>
+    Math.exp(-((x-packetCenter)**2)/(4*packetSigma**2))*Math.cos(packetK*x)
+  );
+  tunnelIm=xValues.map(x=>
+    Math.exp(-((x-packetCenter)**2)/(4*packetSigma**2))*Math.sin(packetK*x)
+  );
+  const norm=integrate(tunnelRe.map((v,i)=>v*v+tunnelIm[i]*tunnelIm[i]));
+  const scale=1/Math.sqrt(norm||1);
+  tunnelRe=tunnelRe.map(v=>v*scale);
+  tunnelIm=tunnelIm.map(v=>v*scale);
+  tunnelTime=0;
+}
 
-      const phase = energy(c.n)*time/hbar;
-      real += amplitude*Math.cos(phase);
-      imag -= amplitude*Math.sin(phase);
+/*
+  근사 투명 경계 조건:
+  경계 안쪽 두 점의 위상차로 국소 파수를 추정해
+  바깥쪽 가상 점을 outgoing-wave 형태로 근사한다.
+
+  이는 엄밀한 시간 비국소 투명 경계 조건과 동일하지 않다.
+  파동묶음의 여러 파수 성분 때문에 작은 반사가 남을 수 있다.
+*/
+function getOutgoingBoundaryPhase(edgeIndex,insideIndex,direction){
+  const er=tunnelRe[edgeIndex],ei=tunnelIm[edgeIndex];
+  const ir=tunnelRe[insideIndex],ii=tunnelIm[insideIndex];
+  const edgeAmp=Math.hypot(er,ei);
+  const insideAmp=Math.hypot(ir,ii);
+
+  let k=direction*packetK;
+
+  if(edgeAmp>1e-10&&insideAmp>1e-10){
+    const crossR=er*ir+ei*ii;
+    const crossI=er*ii-ei*ir;
+    const phase=Math.atan2(crossI,crossR);
+    const estimate=phase/dx;
+    if(Number.isFinite(estimate)&&Math.abs(estimate)>0.1)
+      k=Math.max(-Math.PI/dx,Math.min(Math.PI/dx,estimate));
+  }
+
+  return {re:Math.cos(k*dx),im:Math.sin(k*dx)};
+}
+
+function tunnelStep(){
+  const count=N;
+  const offH=-hbar*hbar/(2*m*dx*dx);
+  const factor=tunnelDt/(2*hbar);
+
+  const leftPhase=getOutgoingBoundaryPhase(0,1,-1);
+  const rightPhase=getOutgoingBoundaryPhase(count-1,count-2,1);
+
+  const ar=new Array(count).fill(0);
+  const ai=new Array(count).fill(factor*offH);
+  const cr=new Array(count).fill(0);
+  const ci=new Array(count).fill(factor*offH);
+  const br=new Array(count);
+  const bi=new Array(count);
+  const dr=new Array(count);
+  const di=new Array(count);
+
+  for(let i=0;i<count;i++){
+    const potential=tunnelPotential(xValues[i]);
+    let diagReal=hbar*hbar/(m*dx*dx)+potential;
+    let diagImag=0;
+
+    if(i===0){
+      diagReal+=offH*leftPhase.re;
+      diagImag=offH*leftPhase.im;
+    }else if(i===count-1){
+      diagReal+=offH*rightPhase.re;
+      diagImag=offH*rightPhase.im;
+    }
+
+    br[i]=1-factor*diagImag;
+    bi[i]=factor*diagReal;
+
+    let hRe=diagReal*tunnelRe[i]-diagImag*tunnelIm[i];
+    let hIm=diagReal*tunnelIm[i]+diagImag*tunnelRe[i];
+
+    if(i>0){
+      hRe+=offH*tunnelRe[i-1];
+      hIm+=offH*tunnelIm[i-1];
+    }
+    if(i<count-1){
+      hRe+=offH*tunnelRe[i+1];
+      hIm+=offH*tunnelIm[i+1];
+    }
+
+    dr[i]=tunnelRe[i]+factor*hIm;
+    di[i]=tunnelIm[i]-factor*hRe;
+  }
+
+  const cpr=new Array(count),cpi=new Array(count);
+  const dpr=new Array(count),dpi=new Array(count);
+
+  for(let i=0;i<count;i++){
+    let denR=br[i],denI=bi[i];
+
+    if(i>0){
+      const mulR=ar[i]*cpr[i-1]-ai[i]*cpi[i-1];
+      const mulI=ar[i]*cpi[i-1]+ai[i]*cpr[i-1];
+      denR-=mulR;
+      denI-=mulI;
+    }
+
+    const den=denR*denR+denI*denI;
+
+    if(i<count-1){
+      cpr[i]=(cr[i]*denR+ci[i]*denI)/den;
+      cpi[i]=(ci[i]*denR-cr[i]*denI)/den;
+    }else{
+      cpr[i]=0;
+      cpi[i]=0;
+    }
+
+    let rhsR=dr[i],rhsI=di[i];
+
+    if(i>0){
+      const mulR=ar[i]*dpr[i-1]-ai[i]*dpi[i-1];
+      const mulI=ar[i]*dpi[i-1]+ai[i]*dpr[i-1];
+      rhsR-=mulR;
+      rhsI-=mulI;
+    }
+
+    dpr[i]=(rhsR*denR+rhsI*denI)/den;
+    dpi[i]=(rhsI*denR-rhsR*denI)/den;
+  }
+
+  const nextRe=new Array(N),nextIm=new Array(N);
+
+  for(let i=count-1;i>=0;i--){
+    if(i===count-1){
+      nextRe[i]=dpr[i];
+      nextIm[i]=dpi[i];
+    }else{
+      const mulR=cpr[i]*nextRe[i+1]-cpi[i]*nextIm[i+1];
+      const mulI=cpr[i]*nextIm[i+1]+cpi[i]*nextRe[i+1];
+      nextRe[i]=dpr[i]-mulR;
+      nextIm[i]=dpi[i]-mulI;
+    }
+  }
+
+  tunnelRe=nextRe;
+  tunnelIm=nextIm;
+  tunnelTime+=tunnelDt;
+}
+
+function setTunnelTime(target){
+  initializeTunnelPacket();
+  const steps=Math.max(0,Math.min(
+    Math.round(target/tunnelDt),
+    Math.round(tunnelMaxTime/tunnelDt)
+  ));
+  for(let i=0;i<steps;i++)tunnelStep();
+  t=tunnelTime;
+}
+
+function getWaveData(time=t){
+  if(isTunneling()){
+    const re=tunnelRe.slice(),im=tunnelIm.slice();
+    return {re,im,probability:re.map((v,i)=>v*v+im[i]*im[i]),zeros:new Array(N).fill(0)};
+  }
+
+  const components=getComponents();
+  const re=[],im=[],probability=[],zeros=[];
+
+  for(let i=0;i<N;i++){
+    let real=0,imag=0;
+
+    for(const c of components){
+      const amplitude=isOscillator()
+        ?c.c*oscillatorAmplitude(c.n,xValues[i])
+        :c.c*Math.sqrt(2/L)*Math.sin(c.n*Math.PI*xValues[i]/L);
+
+      const phase=energy(c.n)*time/hbar;
+      real+=amplitude*Math.cos(phase);
+      imag-=amplitude*Math.sin(phase);
     }
 
     re.push(real);
@@ -369,91 +454,131 @@ function getWaveData(time=t) {
   return {re,im,probability,zeros};
 }
 
-function getAxisRanges() {
-  let bound;
+/* 실제 파동함수 표본에서 축 범위를 계산해 조화 진동자의
+   고차 상태가 지나치게 작게 보이지 않도록 한다. */
+function getAxisRanges(){
+  if(isTunneling())return {y:[-3.2,8.5],z:[-3.2,3.2]};
 
-  if (isOscillator()) {
-    const components = getComponents();
-    bound = 0;
+  const w=getWaveData();
+  let maxWave=0,maxProbability=0;
 
-    for (const c of components) {
-      const vals = xValues.map(
-        x=>Math.abs(c.c*oscillatorAmplitude(c.n,x))
-      );
-      bound += Math.max(...vals);
-    }
-  } else {
-    const components = getComponents();
-    bound = components.reduce(
-      (sum,c)=>sum+Math.abs(c.c)*Math.sqrt(2/L),0
-    );
+  for(let i=0;i<N;i++){
+    maxWave=Math.max(maxWave,Math.hypot(w.re[i],w.im[i]));
+    maxProbability=Math.max(maxProbability,w.probability[i]);
   }
 
+  if(!Number.isFinite(maxWave)||maxWave<1e-8)maxWave=1;
+  if(!Number.isFinite(maxProbability)||maxProbability<1e-8)maxProbability=1;
+
   return {
-    y:[-1.1*bound,1.1*Math.max(bound,bound*bound)],
-    z:[-1.1*bound,1.1*bound]
+    y:[-1.15*maxWave,1.15*Math.max(maxWave,maxProbability)],
+    z:[-1.15*maxWave,1.15*maxWave]
   };
 }
 
-function getScenarioName() {
-  const names = {
-    eigen:`에너지 고유상태 n = ${nSlider.value}`,
-    super12:"n = 1, 2 중첩 상태",
-    super13:"n = 1, 3 중첩 상태",
-    super123:"n = 1, 2, 3 중첩 상태"
+function getScenarioName(){
+  if(isTunneling())return "양자 터널링: 가우스 파동묶음과 사각 퍼텐셜 장벽";
+  const systemName=isOscillator()?"조화 진동자":"무한 퍼텐셜 우물";
+  const names={
+    eigen:`${systemName} 에너지 고유상태 n = ${nSlider.value}`,
+    super12:`${systemName}: n = 1, 2 중첩 상태`,
+    super13:`${systemName}: n = 1, 3 중첩 상태`,
+    super123:`${systemName}: n = 1, 2, 3 중첩 상태`
   };
-
-  const systemName = isOscillator()
-    ? "조화 진동자"
-    : "무한 퍼텐셜 우물";
-
-  return `${systemName} — ${names[scenario.value]}`;
+  return names[scenario.value];
 }
 
-function getGraphVisibility() {
+function getGraphVisibility(){
   return [
-    graphMode.value !== "probability",
-    graphMode.value !== "wave"
+    graphMode.value!=="probability",
+    graphMode.value!=="wave",
+    isTunneling()
   ];
 }
 
-function updateControls() {
-  const period = getPeriod();
-
-  timeSlider.min = 0;
-  timeSlider.max = period;
-  timeSlider.step = period/1000;
-  timeSlider.value = Math.min(t,period);
-
-  document.getElementById("tv").textContent = t.toFixed(5);
-  document.getElementById("sv").textContent =
-    Number(speedSlider.value).toFixed(1)+"×";
-
-  if (isOscillator()) {
-    nSlider.min = 0;
-    nSlider.max = 5;
-    if (Number(nSlider.value)<0) nSlider.value = 0;
-  } else {
-    nSlider.min = 1;
-    nSlider.max = 5;
-    if (Number(nSlider.value)<1) nSlider.value = 1;
-  }
-
-  document.getElementById("nv").textContent = nSlider.value;
-  nSlider.disabled = scenario.value !== "eigen";
-
-  document.getElementById("periodInfo").textContent =
-    `${getScenarioName()} | 한 주기 T = ${getExactPeriodText()} | 현재 시간 t = ${t.toFixed(5)}`;
-
-  document.getElementById("mainFormula").innerHTML =
-    isOscillator()
-      ? "ψₙ(x,t) = NₙHₙ((x−x₀)/a)e<sup>−(x−x₀)²/(2a²)</sup>e<sup>−iω(n+1/2)t</sup>, &nbsp; a = √(ℏ/mω)"
-      : "ψ(x,t) = √(2/L) sin(nπx/L)e<sup>−iEₙt/ℏ</sup>";
+function formatNumber(value){
+  if(!Number.isFinite(value))return "계산 불가";
+  if(Math.abs(value)<0.0000005)return "0.00000";
+  return value.toFixed(5);
 }
 
-function createLayout() {
-  const ranges = getAxisRanges();
+function formatComplex(re,im){
+  if(!Number.isFinite(re)||!Number.isFinite(im))return "계산 불가";
+  return `${formatNumber(re)}${im<0?" − ":" + "}${formatNumber(Math.abs(im))}i`;
+}
 
+function magnitudeSquared(re,im){return re*re+im*im}
+
+function updateControls(){
+  const period=isTunneling()?tunnelMaxTime:getPeriod();
+
+  timeSlider.min=0;
+  timeSlider.max=period;
+  timeSlider.step=isTunneling()?tunnelDt*10:period/1000;
+  timeSlider.value=Math.min(t,period);
+
+  document.getElementById("tv").textContent=t.toFixed(5);
+  document.getElementById("sv").textContent=Number(speedSlider.value).toFixed(1)+"×";
+
+  if(isOscillator()){
+    nSlider.min=0;
+    nSlider.max=5;
+    if(scenario.value==="eigen"&&Number(nSlider.value)<0)nSlider.value=0;
+  }else{
+    nSlider.min=1;
+    nSlider.max=5;
+    if(Number(nSlider.value)<1)nSlider.value=1;
+  }
+
+  document.getElementById("nv").textContent=nSlider.value;
+  nSlider.disabled=isTunneling()||scenario.value!=="eigen";
+  scenario.disabled=isTunneling();
+
+  document.getElementById("periodInfo").textContent=isTunneling()
+    ?`${getScenarioName()} | Δt = ${tunnelDt} | 현재 시간 t = ${t.toFixed(5)}`
+    :`${getScenarioName()} | 한 주기 T = ${getExactPeriodText()} | 현재 시간 t = ${t.toFixed(5)}`;
+
+  const barrierInfo=document.getElementById("barrierInfo");
+  barrierInfo.hidden=!isTunneling();
+
+  if(isTunneling()){
+    const centerEnergy=hbar*hbar*packetK*packetK/(2*m);
+    barrierInfo.textContent=
+      `장벽 퍼텐셜 V₀ = ${barrierHeight} | 입자 파동묶음의 중심 에너지 E₀ ≈ ${formatNumber(centerEnergy)} | 장벽 위치: x = ${barrierLeft}–${barrierRight} (폭 ${formatNumber(barrierRight-barrierLeft)}) | 단위: ℏ = m = 1`;
+  }
+
+  document.getElementById("mainFormula").innerHTML=isTunneling()
+    ?"iℏ ∂ψ/∂t = [−(ℏ²/2m)∂²ψ/∂x² + V(x)]ψ, &nbsp; V(x) = V₀ (장벽 안), 0 (그 밖)"
+    :isOscillator()
+      ?"ψₙ(x,t) = Nₙ Hₙ(ξ)e<sup>−ξ²/2</sup>e<sup>−iEₙt/ℏ</sup>, &nbsp; ξ = (x−x₀)/a"
+      :"ψₙ(x,t) = √(2/L) sin(nπx/L)e<sup>−iEₙt/ℏ</sup>";
+
+  document.getElementById("pointNote").textContent=isTunneling()
+    ?"입력한 위치에서 수치적으로 계산된 파동함수와 연산자 적용값입니다."
+    :"입력한 위치 x와 현재 시간 t에서의 파동함수 및 연산자 적용값입니다.";
+
+  document.getElementById("operatorNote").textContent=isTunneling()
+    ?"수치 파동함수로 계산한 확률 정규화와 연산자 기댓값입니다. 단위는 ℏ = m = 1입니다."
+    :"현재 선택한 상태에서의 연산자 기댓값입니다. 단위는 L = ℏ = m = 1로 설정한 무차원 단위입니다.";
+
+  const fractionTitle=document.getElementById("fractionTitle");
+  const fractionButtons=document.querySelectorAll("#periodButtons button");
+
+  if(isTunneling()){
+    fractionTitle.textContent="시간 위치:";
+    fractionButtons.forEach((button,index)=>{
+      button.textContent=["0%","25%","50%","75%","100%"][index];
+    });
+  }else{
+    fractionTitle.textContent="주기 위치:";
+    fractionButtons.forEach((button,index)=>{
+      button.textContent=["0","T/4","T/2","3T/4","T"][index];
+    });
+  }
+}
+
+function createLayout(){
+  const ranges=getAxisRanges();
   return {
     title:{text:getScenarioName(),font:{size:18}},
     margin:{l:0,r:0,t:45,b:0},
@@ -470,494 +595,314 @@ function createLayout() {
   };
 }
 
-function createTraces() {
-  const w = getWaveData();
-  const visibility = getGraphVisibility();
+function createBarrierMesh(){
+  const ymin=-3.2,ymax=8.5,zmin=-3.2,zmax=3.2;
+  return {
+    x:[barrierLeft,barrierRight,barrierRight,barrierLeft,barrierLeft,barrierRight,barrierRight,barrierLeft],
+    y:[ymin,ymin,ymax,ymax,ymin,ymin,ymax,ymax],
+    z:[zmin,zmin,zmin,zmin,zmax,zmax,zmax,zmax],
+    i:[0,0,4,4,0,0,3,3,0,0,1,1],
+    j:[1,2,6,7,5,4,2,6,3,7,5,6],
+    k:[2,3,5,6,1,5,6,7,7,4,6,2]
+  };
+}
+
+function createTraces(){
+  const w=getWaveData();
+  const visibility=getGraphVisibility();
+  const barrier=createBarrierMesh();
 
   return [
     {
-      type:"scatter3d",
-      mode:"lines",
-      name:"복소 파동함수 ψ",
-      x:xValues,y:w.re,z:w.im,
-      visible:visibility[0],
-      line:{width:5}
+      type:"scatter3d",mode:"lines",name:"복소 파동함수 ψ",
+      x:xValues,y:w.re,z:w.im,visible:visibility[0],line:{width:5}
     },
     {
-      type:"scatter3d",
-      mode:"lines",
-      name:"확률밀도 |ψ|²",
-      x:xValues,y:w.probability,z:w.zeros,
-      visible:visibility[1],
+      type:"scatter3d",mode:"lines",name:"확률밀도 |ψ|²",
+      x:xValues,y:w.probability,z:w.zeros,visible:visibility[1],
       line:{width:5,dash:"dash",color:"orange"}
+    },
+    {
+      type:"mesh3d",name:"퍼텐셜 장벽(위치·폭 표시)",
+      x:barrier.x,y:barrier.y,z:barrier.z,
+      i:barrier.i,j:barrier.j,k:barrier.k,
+      visible:visibility[2],color:"deepskyblue",
+      opacity:0.22,flatshading:true,showscale:false,hoverinfo:"skip"
     }
   ];
 }
 
-function integrate(values) {
-  let sum = 0;
-  for (let i=0;i<values.length-1;i++) {
-    sum += (values[i]+values[i+1])*dx/2;
-  }
-  return sum;
-}
+function calculateOperatorValues(w){
+  const xProb=[],x2Prob=[],pIntegrand=[],p2Integrand=[],potentialIntegrand=[];
 
-function calculateOperatorValues(w) {
-  const xProb = [];
-  const x2Prob = [];
-  const pIntegrand = [];
+  for(let i=0;i<N;i++){
+    const prob=w.probability[i];
+    xProb.push(xValues[i]*prob);
+    x2Prob.push(xValues[i]*xValues[i]*prob);
 
-  for (let i=0;i<N;i++) {
-    xProb.push(xValues[i]*w.probability[i]);
-    x2Prob.push(xValues[i]*xValues[i]*w.probability[i]);
-  }
+    const left=Math.max(0,i-1),right=Math.min(N-1,i+1);
+    const denom=(right-left)*dx||1;
+    const dRe=(w.re[right]-w.re[left])/denom;
+    const dIm=(w.im[right]-w.im[left])/denom;
 
-  for (let i=0;i<N;i++) {
-    let dRe, dIm;
-
-    if (i===0) {
-      dRe=(w.re[1]-w.re[0])/dx;
-      dIm=(w.im[1]-w.im[0])/dx;
-    } else if (i===N-1) {
-      dRe=(w.re[i]-w.re[i-1])/dx;
-      dIm=(w.im[i]-w.im[i-1])/dx;
-    } else {
-      dRe=(w.re[i+1]-w.re[i-1])/(2*dx);
-      dIm=(w.im[i+1]-w.im[i-1])/(2*dx);
-    }
+    const secondRe=i===0||i===N-1?0:
+      (w.re[i+1]-2*w.re[i]+w.re[i-1])/(dx*dx);
+    const secondIm=i===0||i===N-1?0:
+      (w.im[i+1]-2*w.im[i]+w.im[i-1])/(dx*dx);
 
     pIntegrand.push(hbar*(w.re[i]*dIm-w.im[i]*dRe));
+    p2Integrand.push(hbar*hbar*(dRe*dRe+dIm*dIm));
+
+    const potential=isTunneling()?tunnelPotential(xValues[i]):
+      isOscillator()?0.5*m*omega*omega*(xValues[i]-oscillatorCenter)**2:0;
+
+    potentialIntegrand.push(potential*prob);
   }
 
-  const norm = integrate(w.probability);
-  const xMean = integrate(xProb)/norm;
-  const x2Mean = integrate(x2Prob)/norm;
-  const pMean = integrate(pIntegrand)/norm;
-
-  if (isOscillator()) {
-    const potentialProb = [];
-    const kineticIntegrand = [];
-
-    for (let i=0;i<N;i++) {
-      const q = xValues[i]-oscillatorCenter;
-      potentialProb.push(0.5*m*omega**2*q*q*w.probability[i]);
-
-      let dRe, dIm;
-      if (i===0) {
-        dRe=(w.re[1]-w.re[0])/dx;
-        dIm=(w.im[1]-w.im[0])/dx;
-      } else if (i===N-1) {
-        dRe=(w.re[i]-w.re[i-1])/dx;
-        dIm=(w.im[i]-w.im[i-1])/dx;
-      } else {
-        dRe=(w.re[i+1]-w.re[i-1])/(2*dx);
-        dIm=(w.im[i+1]-w.im[i-1])/(2*dx);
-      }
-
-      kineticIntegrand.push(
-        hbar*hbar*(dRe*dRe+dIm*dIm)/(2*m)
-      );
-    }
-
-    const kineticMean = integrate(kineticIntegrand)/norm;
-    const potentialMean = integrate(potentialProb)/norm;
-    const energyMean = kineticMean+potentialMean;
-    const p2Mean = 2*m*kineticMean;
-
-    return {
-      norm,xMean,x2Mean,pMean,p2Mean,
-      energyMean,kineticMean,potentialMean
-    };
-  }
-
-  const components = getComponents();
-  const energyMean = components.reduce(
-    (sum,c)=>sum+c.c*c.c*energy(c.n),0
-  );
-  const p2Mean = 2*m*energyMean;
+  const norm=integrate(w.probability);
+  const safeNorm=Math.max(norm,1e-15);
+  const kineticMean=integrate(p2Integrand)/(2*m*safeNorm);
+  const potentialMean=integrate(potentialIntegrand)/safeNorm;
 
   return {
-    norm,xMean,x2Mean,pMean,p2Mean,energyMean,
-    kineticMean:energyMean,
-    potentialMean:0
+    norm,
+    xMean:integrate(xProb)/safeNorm,
+    x2Mean:integrate(x2Prob)/safeNorm,
+    pMean:integrate(pIntegrand)/safeNorm,
+    p2Mean:integrate(p2Integrand)/safeNorm,
+    energyMean:kineticMean+potentialMean,
+    kineticMean,potentialMean
   };
 }
 
-function formatNumber(value) {
-  if (!Number.isFinite(value)) return "계산 불가";
-  if (Math.abs(value)<0.0000005) return "0.00000";
-  return value.toFixed(5);
-}
+function calculatePointValues(x){
+  const w=getWaveData();
+  const idx=Math.max(1,Math.min(N-2,Math.round((x-xValues[0])/dx)));
+  const re=w.re[idx],im=w.im[idx];
 
-function formatComplex(re,im) {
-  if (!Number.isFinite(re) || !Number.isFinite(im)) return "계산 불가";
-  const sign = im < 0 ? " − " : " + ";
-  return `${formatNumber(re)}${sign}${formatNumber(Math.abs(im))}i`;
-}
+  const derivativeRe=(w.re[idx+1]-w.re[idx-1])/(2*dx);
+  const derivativeIm=(w.im[idx+1]-w.im[idx-1])/(2*dx);
+  const secondRe=(w.re[idx+1]-2*re+w.re[idx-1])/(dx*dx);
+  const secondIm=(w.im[idx+1]-2*im+w.im[idx-1])/(dx*dx);
+  const probability=re*re+im*im;
 
-function magnitudeSquared(re,im) {
-  return re*re+im*im;
-}
+  const pRe=hbar*derivativeIm,pIm=-hbar*derivativeRe;
+  const p2Re=-hbar*hbar*secondRe,p2Im=-hbar*hbar*secondIm;
+  const kineticRe=p2Re/(2*m),kineticIm=p2Im/(2*m);
 
-function calculatePointValues(x,time) {
-  let re = 0;
-  let im = 0;
-  let derivativeRe = 0;
-  let derivativeIm = 0;
-  let p2Re = 0;
-  let p2Im = 0;
+  const potential=isTunneling()?tunnelPotential(x):
+    isOscillator()?0.5*m*omega*omega*(x-oscillatorCenter)**2:0;
 
-  const components = getComponents();
-
-  for (const c of components) {
-    let amplitude, derivativeAmplitude, p2Amplitude;
-
-    if (isOscillator()) {
-      const q = x-oscillatorCenter;
-      const xi = q/oscillatorLength;
-
-      amplitude = c.c*oscillatorAmplitude(c.n,x);
-
-      const normFactor =
-        c.c/(Math.pow(Math.PI,0.25)*Math.sqrt(oscillatorLength)*
-        Math.sqrt((2**c.n)*factorial(c.n)));
-
-      derivativeAmplitude = normFactor*Math.exp(-0.5*xi*xi)*
-        ((c.n === 0 ? 0 : 2*c.n*hermitePolynomial(c.n-1,xi))-
-        xi*hermitePolynomial(c.n,xi))/oscillatorLength;
-
-      p2Amplitude = 2*m*(energy(c.n)-
-        0.5*m*omega**2*q*q)*amplitude;
-    } else {
-      const k = c.n*Math.PI/L;
-      amplitude = c.c*Math.sqrt(2/L)*Math.sin(k*x);
-      derivativeAmplitude = c.c*Math.sqrt(2/L)*k*Math.cos(k*x);
-      p2Amplitude = hbar*hbar*c.c*Math.sqrt(2/L)*k*k*Math.sin(k*x);
-    }
-
-    const phase = energy(c.n)*time/hbar;
-    const cosPhase = Math.cos(phase);
-    const sinPhase = Math.sin(phase);
-
-    re += amplitude*cosPhase;
-    im -= amplitude*sinPhase;
-    derivativeRe += derivativeAmplitude*cosPhase;
-    derivativeIm -= derivativeAmplitude*sinPhase;
-    p2Re += p2Amplitude*cosPhase;
-    p2Im -= p2Amplitude*sinPhase;
-  }
-
-  const probability = magnitudeSquared(re,im);
-  const pRe = hbar*derivativeIm;
-  const pIm = -hbar*derivativeRe;
-
-  const xRe = x*re;
-  const xIm = x*im;
-  const x2Re = x*x*re;
-  const x2Im = x*x*im;
-
-  const kineticRe = p2Re/(2*m);
-  const kineticIm = p2Im/(2*m);
-
-  let potentialRe = 0;
-  let potentialIm = 0;
-
-  if (isOscillator()) {
-    const potential = 0.5*m*omega**2*(x-oscillatorCenter)**2;
-    potentialRe = potential*re;
-    potentialIm = potential*im;
-  }
-
-  const hRe = kineticRe+potentialRe;
-  const hIm = kineticIm+potentialIm;
+  const potentialRe=potential*re,potentialIm=potential*im;
 
   return {
     re,im,probability,
-    xRe,xIm,x2Re,x2Im,
+    xRe:x*re,xIm:x*im,x2Re:x*x*re,x2Im:x*x*im,
     pRe,pIm,p2Re,p2Im,
-    hRe,hIm,kineticRe,kineticIm,
-    potentialRe,potentialIm
+    hRe:kineticRe+potentialRe,hIm:kineticIm+potentialIm,
+    kineticRe,kineticIm,potentialRe,potentialIm
   };
 }
 
-function updatePointPanel() {
-  const rawX = Number(xInput.value);
-  const xRange = getPositionRange();
+function updatePointPanel(){
+  const rawX=Number(xInput.value);
+  const range=getPositionRange();
 
-  if (xInput.value.trim()==="" || !Number.isFinite(rawX)) {
-    document.getElementById("pointTime").textContent =
-      "위치 x에 " + xRange[0] + "부터 " + xRange[1] + " 사이의 수를 입력하세요.";
-    document.getElementById("pointList").innerHTML = "";
+  if(xInput.value.trim()===""||!Number.isFinite(rawX)){
+    document.getElementById("pointTime").textContent=
+      `위치 x에 ${range[0]}부터 ${range[1]} 사이의 수를 입력하세요.`;
+    document.getElementById("pointList").innerHTML="";
     return;
   }
 
-  if (rawX<xRange[0] || rawX>xRange[1]) {
-    document.getElementById("pointTime").textContent =
-      "위치 x는 " + xRange[0] + "부터 " + xRange[1] + " 사이여야 합니다.";
-    document.getElementById("pointList").innerHTML = "";
+  if(rawX<range[0]||rawX>range[1]){
+    document.getElementById("pointTime").textContent=
+      `위치 x는 ${range[0]}부터 ${range[1]} 사이여야 합니다.`;
+    document.getElementById("pointList").innerHTML="";
     return;
   }
 
-  const x = rawX;
-  const v = calculatePointValues(x,t);
-
-  document.getElementById("pointTime").textContent =
+  const x=rawX,v=calculatePointValues(x);
+  document.getElementById("pointTime").textContent=
     `현재 위치 x = ${formatNumber(x)}, 시간 t = ${formatNumber(t)}`;
 
-  const items = [
-    {
-      name:"파동함수",
-      formula:"ψ(x,t)",
-      value:formatComplex(v.re,v.im),
-      magnitudeLabel:"|ψ(x,t)|²",
-      magnitude:v.probability
-    },
-    {
-      name:"위치 연산자 적용값",
-      formula:"x̂ψ = xψ",
-      value:formatComplex(v.xRe,v.xIm),
-      magnitudeLabel:"|x̂ψ|²",
-      magnitude:magnitudeSquared(v.xRe,v.xIm)
-    },
-    {
-      name:"위치 제곱 연산자 적용값",
-      formula:"x̂²ψ = x²ψ",
-      value:formatComplex(v.x2Re,v.x2Im),
-      magnitudeLabel:"|x̂²ψ|²",
-      magnitude:magnitudeSquared(v.x2Re,v.x2Im)
-    },
-    {
-      name:"운동량 연산자 적용값",
-      formula:"p̂ψ = −iℏ ∂ψ/∂x",
-      value:formatComplex(v.pRe,v.pIm),
-      magnitudeLabel:"|p̂ψ|²",
-      magnitude:magnitudeSquared(v.pRe,v.pIm)
-    },
-    {
-      name:"운동량 제곱 연산자 적용값",
-      formula:"p̂²ψ = −ℏ² ∂²ψ/∂x²",
-      value:formatComplex(v.p2Re,v.p2Im),
-      magnitudeLabel:"|p̂²ψ|²",
-      magnitude:magnitudeSquared(v.p2Re,v.p2Im)
-    },
-    {
-      name:"해밀토니안 적용값",
-      formula:"Ĥψ = T̂ψ + V̂ψ",
-      value:formatComplex(v.hRe,v.hIm),
-      magnitudeLabel:"|Ĥψ|²",
-      magnitude:magnitudeSquared(v.hRe,v.hIm)
-    },
-    {
-      name:"운동에너지 연산자 적용값",
-      formula:"T̂ψ = p̂²ψ/(2m)",
-      value:formatComplex(v.kineticRe,v.kineticIm),
-      magnitudeLabel:"|T̂ψ|²",
-      magnitude:magnitudeSquared(v.kineticRe,v.kineticIm)
-    },
-    {
-      name:"퍼텐셜 에너지 연산자 적용값",
-      formula:"V̂ψ = V(x)ψ",
-      value:formatComplex(v.potentialRe,v.potentialIm),
-      magnitudeLabel:"|V̂ψ|²",
-      magnitude:magnitudeSquared(v.potentialRe,v.potentialIm)
-    }
+  const items=[
+    {name:"파동함수",formula:"ψ(x,t)",value:formatComplex(v.re,v.im),magnitudeLabel:"|ψ(x,t)|²",magnitude:v.probability},
+    {name:"위치 연산자 적용값",formula:"x̂ψ = xψ",value:formatComplex(v.xRe,v.xIm),magnitudeLabel:"|x̂ψ|²",magnitude:magnitudeSquared(v.xRe,v.xIm)},
+    {name:"위치 제곱 연산자 적용값",formula:"x̂²ψ = x²ψ",value:formatComplex(v.x2Re,v.x2Im),magnitudeLabel:"|x̂²ψ|²",magnitude:magnitudeSquared(v.x2Re,v.x2Im)},
+    {name:"운동량 연산자 적용값",formula:"p̂ψ = −iℏ ∂ψ/∂x",value:formatComplex(v.pRe,v.pIm),magnitudeLabel:"|p̂ψ|²",magnitude:magnitudeSquared(v.pRe,v.pIm)},
+    {name:"운동량 제곱 연산자 적용값",formula:"p̂²ψ = −ℏ² ∂²ψ/∂x²",value:formatComplex(v.p2Re,v.p2Im),magnitudeLabel:"|p̂²ψ|²",magnitude:magnitudeSquared(v.p2Re,v.p2Im)},
+    {name:"해밀토니안 적용값",formula:"Ĥψ = T̂ψ + V̂ψ",value:formatComplex(v.hRe,v.hIm),magnitudeLabel:"|Ĥψ|²",magnitude:magnitudeSquared(v.hRe,v.hIm)},
+    {name:"운동에너지 연산자 적용값",formula:"T̂ψ = p̂²ψ/(2m)",value:formatComplex(v.kineticRe,v.kineticIm),magnitudeLabel:"|T̂ψ|²",magnitude:magnitudeSquared(v.kineticRe,v.kineticIm)},
+    {name:"퍼텐셜 에너지 연산자 적용값",formula:"V̂ψ = V(x)ψ",value:formatComplex(v.potentialRe,v.potentialIm),magnitudeLabel:"|V̂ψ|²",magnitude:magnitudeSquared(v.potentialRe,v.potentialIm)}
   ];
 
-  document.getElementById("pointList").innerHTML =
-    items.map(item=>`
-      <div class="pointItem">
-        <div class="pointName">${item.name}</div>
-        <div class="pointFormula">${item.formula}</div>
-        <div class="pointValue">${item.value}</div>
-        <div class="pointMagnitude">
-          ${item.magnitudeLabel} = ${formatNumber(item.magnitude)}
-        </div>
-      </div>
-    `).join("");
+  document.getElementById("pointList").innerHTML=items.map(item=>`
+    <div class="pointItem">
+      <div class="pointName">${item.name}</div>
+      <div class="pointFormula">${item.formula}</div>
+      <div class="pointValue">${item.value}</div>
+      <div class="pointMagnitude">${item.magnitudeLabel} = ${formatNumber(item.magnitude)}</div>
+    </div>
+  `).join("");
 }
 
-function updateOperatorPanel() {
-  const w = getWaveData();
-  const v = calculateOperatorValues(w);
+function updateOperatorPanel(){
+  const w=getWaveData();
+  const v=calculateOperatorValues(w);
 
-  const items = [
-    {
-      name:"위치 연산자",
-      formula:"x̂ = x",
-      value:`⟨x̂⟩ = ${formatNumber(v.xMean)}`
-    },
-    {
-      name:"위치 제곱 연산자",
-      formula:"x̂² = x²",
-      value:`⟨x̂²⟩ = ${formatNumber(v.x2Mean)}`
-    },
-    {
-      name:"운동량 연산자",
-      formula:"p̂ = −iℏ ∂/∂x",
-      value:`⟨p̂⟩ = ${formatNumber(v.pMean)}`
-    },
-    {
-      name:"운동량 제곱 연산자",
-      formula:"p̂² = −ℏ² ∂²/∂x²",
-      value:`⟨p̂²⟩ = ${formatNumber(v.p2Mean)}`
-    },
-    {
-      name:"해밀토니안",
-      formula:"Ĥ = −(ℏ²/2m) ∂²/∂x² + V(x)",
-      value:`⟨Ĥ⟩ = ${formatNumber(v.energyMean)}`
-    },
-    {
-      name:"운동 에너지",
-      formula:"T̂ = p̂²/(2m)",
-      value:`⟨T̂⟩ = ${formatNumber(v.kineticMean)}`
-    },
-    {
-      name:"퍼텐셜 에너지",
-      formula:"V̂ = V(x)",
-      value:`⟨V̂⟩ = ${formatNumber(v.potentialMean)}`
-    }
+  const items=[
+    ...(isTunneling()?[{
+      name:"확률 정규화",formula:"∫ |ψ(x,t)|² dx",
+      value:`∫ |ψ|² dx ≈ ${formatNumber(v.norm)}`
+    }]:[]),
+    {name:"위치 연산자",formula:"x̂ = x",value:`⟨x̂⟩ = ${formatNumber(v.xMean)}`},
+    {name:"위치 제곱 연산자",formula:"x̂² = x²",value:`⟨x̂²⟩ = ${formatNumber(v.x2Mean)}`},
+    {name:"운동량 연산자",formula:"p̂ = −iℏ ∂/∂x",value:`⟨p̂⟩ = ${formatNumber(v.pMean)}`},
+    {name:"운동량 제곱 연산자",formula:"p̂² = −ℏ² ∂²/∂x²",value:`⟨p̂²⟩ = ${formatNumber(v.p2Mean)}`},
+    {name:"해밀토니안",formula:"Ĥ = −(ℏ²/2m) ∂²/∂x² + V(x)",value:`⟨Ĥ⟩ = ${formatNumber(v.energyMean)}`},
+    {name:"운동 에너지",formula:"T̂ = p̂²/(2m)",value:`⟨T̂⟩ = ${formatNumber(v.kineticMean)}`},
+    {name:"퍼텐셜 에너지",formula:"V̂ = V(x)",value:`⟨V̂⟩ = ${formatNumber(v.potentialMean)}`}
   ];
 
-  document.getElementById("operatorList").innerHTML =
-    items.map(item=>`
-      <div class="operatorItem">
-        <div class="operatorName">${item.name}</div>
-        <div class="operatorFormula">${item.formula}</div>
-        <div class="operatorValue">${item.value}</div>
-      </div>
-    `).join("");
+  document.getElementById("operatorList").innerHTML=items.map(item=>`
+    <div class="operatorItem">
+      <div class="operatorName">${item.name}</div>
+      <div class="operatorFormula">${item.formula}</div>
+      <div class="operatorValue">${item.value}</div>
+    </div>
+  `).join("");
 }
 
-async function renderFrame() {
-  if (!graphReady || frameUpdating) return;
+async function renderFrame(){
+  if(!graphReady||frameUpdating)return;
+  frameUpdating=true;
 
-  frameUpdating = true;
-  try {
-    const w = getWaveData();
-    const visibility = getGraphVisibility();
+  try{
+    const w=getWaveData();
+    const visibility=getGraphVisibility();
+    const barrier=createBarrierMesh();
 
-    await Plotly.update(
-      graph,
-      {
-        x:[xValues,xValues],
-        y:[w.re,w.probability],
-        z:[w.im,w.zeros],
-        visible:visibility
-      },
-      {},
-      [0,1]
-    );
+    await Plotly.update(graph,{
+      x:[xValues,xValues,barrier.x],
+      y:[w.re,w.probability,barrier.y],
+      z:[w.im,w.zeros,barrier.z],
+      visible:visibility
+    },{},[0,1,2]);
 
     updateOperatorPanel();
     updatePointPanel();
-  } finally {
-    frameUpdating = false;
+  }finally{
+    frameUpdating=false;
   }
 }
 
-async function updateAxisRanges() {
-  if (!graphReady) return;
-
-  const ranges = getAxisRanges();
-  const xRange = getPositionRange();
-
+async function updateAxisRanges(){
+  if(!graphReady)return;
+  const ranges=getAxisRanges();
   await Plotly.relayout(graph,{
-    "scene.xaxis.range":xRange,
+    "scene.xaxis.range":getPositionRange(),
     "scene.yaxis.range":ranges.y,
     "scene.zaxis.range":ranges.z,
     "title.text":getScenarioName()
   });
 }
 
-async function updateAll() {
+async function updateAll(){
   updateControls();
-
-  if (!graphReady) return;
-
+  if(!graphReady)return;
   await updateAxisRanges();
   await renderFrame();
 }
 
-function stopAnimation() {
-  playing = false;
-  lastFrame = null;
-
-  if (animationId !== null) {
+function stopAnimation(){
+  playing=false;
+  lastFrame=null;
+  if(animationId!==null){
     cancelAnimationFrame(animationId);
-    animationId = null;
+    animationId=null;
   }
-
-  playButton.textContent = "▶ 재생";
+  playButton.textContent="▶ 재생";
 }
 
-function animationStep(timestamp) {
-  if (!playing) return;
+function animationStep(timestamp){
+  if(!playing)return;
+  if(lastFrame===null)lastFrame=timestamp;
 
-  if (lastFrame === null) lastFrame = timestamp;
+  const delta=Math.min((timestamp-lastFrame)/1000,0.05);
+  lastFrame=timestamp;
+  const period=isTunneling()?tunnelMaxTime:getPeriod();
 
-  const delta = Math.min((timestamp-lastFrame)/1000,0.05);
-  lastFrame = timestamp;
-
-  const period = getPeriod();
-  t += delta*Number(speedSlider.value)*period/5;
-
-  if (t>=period) t-=period;
+  if(isTunneling()){
+    const steps=Math.max(1,Math.round(5*Number(speedSlider.value)));
+    for(let i=0;i<steps&&tunnelTime<tunnelMaxTime;i++)tunnelStep();
+    t=tunnelTime;
+    if(t>=tunnelMaxTime)stopAnimation();
+  }else{
+    t+=delta*Number(speedSlider.value)*period/5;
+    if(t>=period)t-=period;
+  }
 
   updateControls();
 
-  if (timestamp-lastRenderTime>=1000/30 && !frameUpdating) {
-    lastRenderTime = timestamp;
+  if(timestamp-lastRenderTime>=1000/30&&!frameUpdating){
+    lastRenderTime=timestamp;
     renderFrame();
   }
 
-  animationId = requestAnimationFrame(animationStep);
+  if(playing)animationId=requestAnimationFrame(animationStep);
 }
 
 playButton.addEventListener("click",()=>{
-  if (playing) {
-    stopAnimation();
-  } else {
-    playing = true;
-    lastFrame = null;
-    lastRenderTime = 0;
-    playButton.textContent = "⏸ 일시정지";
-    animationId = requestAnimationFrame(animationStep);
+  if(playing)stopAnimation();
+  else{
+    playing=true;
+    lastFrame=null;
+    lastRenderTime=0;
+    playButton.textContent="⏸ 일시정지";
+    animationId=requestAnimationFrame(animationStep);
   }
 });
 
 document.getElementById("reset").addEventListener("click",async()=>{
   stopAnimation();
-  t = 0;
+  t=0;
+  if(isTunneling())initializeTunnelPacket();
   await updateAll();
 });
 
-system.addEventListener("change",async()=>{
+systemSelect.addEventListener("change",async()=>{
   stopAnimation();
-  t = 0;
+  t=0;
   updatePositionGrid();
+  if(isTunneling())initializeTunnelPacket();
   await updateAll();
 });
 
 scenario.addEventListener("change",async()=>{
   stopAnimation();
-  t = 0;
+  t=0;
+  updatePositionGrid();
   await updateAll();
 });
 
 nSlider.addEventListener("input",async()=>{
   stopAnimation();
-  t = 0;
+  t=0;
   await updateAll();
 });
 
 timeSlider.addEventListener("input",async()=>{
-  t = Number(timeSlider.value);
+  stopAnimation();
+  if(isTunneling())setTunnelTime(Number(timeSlider.value));
+  else t=Number(timeSlider.value);
   updateControls();
+  await updateAxisRanges();
   await renderFrame();
 });
 
 speedSlider.addEventListener("input",()=>{
-  document.getElementById("sv").textContent =
+  document.getElementById("sv").textContent=
     Number(speedSlider.value).toFixed(1)+"×";
 });
 
@@ -966,25 +911,26 @@ xInput.addEventListener("input",updatePointPanel);
 
 document.querySelectorAll("#periodButtons button").forEach(button=>{
   button.addEventListener("click",async()=>{
-    const fraction = Number(button.dataset.fraction);
-    t = getPeriod()*fraction;
+    const fraction=Number(button.dataset.fraction);
+    if(isTunneling())setTunnelTime(tunnelMaxTime*fraction);
+    else t=getPeriod()*fraction;
     updateControls();
+    await updateAxisRanges();
     await renderFrame();
   });
 });
 
-async function initialize() {
+async function initialize(){
   updatePositionGrid();
+  if(isTunneling())initializeTunnelPacket();
   updateControls();
 
   await Plotly.newPlot(
-    graph,
-    createTraces(),
-    createLayout(),
+    graph,createTraces(),createLayout(),
     {responsive:true,displaylogo:false}
   );
 
-  graphReady = true;
+  graphReady=true;
   updateOperatorPanel();
   updatePointPanel();
 }
